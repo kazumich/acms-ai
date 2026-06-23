@@ -22,10 +22,11 @@ class Title extends ACMS_POST
         $serviceAI = new ServicesAI();
         $config = $serviceAI->getConfig();
 
-        $titleValid = $config->get('ai_title_valid');
-        $customPrompt = !empty($titleValid)
-            ? $config->get('ai_title_prompt')
-            : "- Please give 5 suggestions.\n- Please answer in Japanese.";
+        // ai_title_valid は機能の表示ON/OFF（フロント制御）。プロンプトは保存値を使い、空なら既定文。
+        $customPrompt = (string) $config->get('ai_title_prompt');
+        if (trim($customPrompt) === '') {
+            $customPrompt = "- Please give 5 suggestions.\n- Please answer in Japanese.";
+        }
 
         $promptMessages = [
             [

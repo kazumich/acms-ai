@@ -78,9 +78,6 @@
                     id="input-checkbox-ai_title_valid-on"
                     value="on" />
                   <label for="input-checkbox-ai_title_valid-on"><i class="acms-admin-ico-checkbox"></i>有効</label>
-                  <p class="acms-admin-text-helper acms-admin-margin-top-mini">
-                    有効にすることで、以下のテキストエリアに入力したプロンプトをもとに、記事タイトルの候補をAIが生成します。
-                  </p>
                 </div>
                 <input type="hidden" name="config[]" value="ai_title_valid" />
               </td>
@@ -88,7 +85,9 @@
             <tr>
               <th></th>
               <td>
-                <textarea name="ai_title_prompt" class="acms-admin-form-width-full">{ai_title_prompt}</textarea>
+                <!-- 既定文（Title.php の fallback と一致させる）。空のとき既定文を表示・編集可能にする -->
+                <textarea name="ai_title_prompt" class="acms-admin-form-width-full"><!-- BEGIN_IF [{ai_title_prompt}/em/] -->- Please give 5 suggestions.
+- Please answer in Japanese.<!-- ELSE -->{ai_title_prompt}<!-- END_IF --></textarea>
                 <input type="hidden" name="config[]" value="ai_title_prompt" />
               </td>
             </tr>
@@ -98,9 +97,6 @@
                 <div class="acms-admin-form-checkbox">
                   <input type="checkbox" name="ai_tag_valid[]" {ai_tag_valid:checked#on} id="input-checkbox-ai_tag_valid-on" value="on" />
                   <label for="input-checkbox-ai_tag_valid-on"><i class="acms-admin-ico-checkbox"></i>有効</label>
-                  <p class="acms-admin-text-helper acms-admin-margin-top-mini">
-                    有効にすることで、以下のテキストエリアに入力したプロンプトをもとに、記事タグの候補をAIが生成します。
-                  </p>
                 </div>
                 <input type="hidden" name="config[]" value="ai_tag_valid" />
               </td>
@@ -108,7 +104,8 @@
             <tr>
               <th></th>
               <td>
-                <textarea name="ai_tag_prompt" class="acms-admin-form-width-full">{ai_tag_prompt}</textarea>
+                <!-- 既定文（Tag.php の fallback と一致させる）。空のとき既定文を表示・編集可能にする -->
+                <textarea name="ai_tag_prompt" class="acms-admin-form-width-full"><!-- BEGIN_IF [{ai_tag_prompt}/em/] -->Please answer in Japanese.<!-- ELSE -->{ai_tag_prompt}<!-- END_IF --></textarea>
                 <input type="hidden" name="config[]" value="ai_tag_prompt" />
               </td>
             </tr>
@@ -117,49 +114,50 @@
 
         <h2 class="acms-admin-admin-title2"><!-- T -->メディアAI（画像）プロンプト設定<!-- /T --></h2>
         <p class="acms-admin-text-helper acms-admin-margin-bottom-small">
-          メディア管理画面で画像から各フィールド（代替テキスト・キャプション・メモ・ファイル名・タグ）を生成する際の指示文です。空欄にすると内蔵の既定文を使用します。文字数や個数の指定は各指示文の中に直接書いてください。
+          メディア管理画面で画像から各フィールド（代替テキスト・キャプション・メモ・ファイル名・タグ）を生成する際の指示文です。既定文が入っているので、必要に応じて編集してください。文字数や個数の指定は各指示文の中に直接書きます。
         </p>
+        <!-- 既定文は GenerateMediaFields.php の DEFAULT_PROMPTS / DEFAULT_SYSTEM_PROMPT と一致させること。空のとき既定文を表示・編集可能にする -->
         <table class="acms-admin-table-admin-edit">
           <tbody>
             <tr>
               <th class="acms-admin-table-nowrap">システムプロンプト</th>
               <td>
-                <textarea name="ai_vision_system_prompt" rows="2" class="acms-admin-form-width-full" placeholder="空欄なら既定文（JSONのみ返すよう指示）を使用">{ai_vision_system_prompt}</textarea>
+                <textarea name="ai_vision_system_prompt" rows="3" class="acms-admin-form-width-full"><!-- BEGIN_IF [{ai_vision_system_prompt}/em/] -->あなたは画像のメタ情報を作成するアシスタントです。指定されたキーだけを持つ JSON オブジェクトを1つだけ出力してください。コードフェンス・説明文・前後の文章は一切付けず、JSON のみを返します。<!-- ELSE -->{ai_vision_system_prompt}<!-- END_IF --></textarea>
                 <input type="hidden" name="config[]" value="ai_vision_system_prompt" />
               </td>
             </tr>
             <tr>
               <th class="acms-admin-table-nowrap">代替テキスト</th>
               <td>
-                <textarea name="ai_vision_prompt_alt" rows="2" class="acms-admin-form-width-full" placeholder="空欄なら既定文を使用">{ai_vision_prompt_alt}</textarea>
+                <textarea name="ai_vision_prompt_alt" rows="2" class="acms-admin-form-width-full"><!-- BEGIN_IF [{ai_vision_prompt_alt}/em/] -->視覚障害のあるユーザー向けの簡潔で具体的な代替テキスト（日本語、120文字以内、「画像」などの前置きや引用符・改行なし）<!-- ELSE -->{ai_vision_prompt_alt}<!-- END_IF --></textarea>
                 <input type="hidden" name="config[]" value="ai_vision_prompt_alt" />
               </td>
             </tr>
             <tr>
               <th class="acms-admin-table-nowrap">キャプション</th>
               <td>
-                <textarea name="ai_vision_prompt_caption" rows="2" class="acms-admin-form-width-full" placeholder="空欄なら既定文を使用">{ai_vision_prompt_caption}</textarea>
+                <textarea name="ai_vision_prompt_caption" rows="2" class="acms-admin-form-width-full"><!-- BEGIN_IF [{ai_vision_prompt_caption}/em/] -->画像の短いキャプション（日本語、100文字以内、1文程度）<!-- ELSE -->{ai_vision_prompt_caption}<!-- END_IF --></textarea>
                 <input type="hidden" name="config[]" value="ai_vision_prompt_caption" />
               </td>
             </tr>
             <tr>
               <th class="acms-admin-table-nowrap">メモ</th>
               <td>
-                <textarea name="ai_vision_prompt_memo" rows="2" class="acms-admin-form-width-full" placeholder="空欄なら既定文を使用">{ai_vision_prompt_memo}</textarea>
+                <textarea name="ai_vision_prompt_memo" rows="2" class="acms-admin-form-width-full"><!-- BEGIN_IF [{ai_vision_prompt_memo}/em/] -->管理者向けの内部メモ（日本語、200文字以内、被写体・用途・キーワードなど）<!-- ELSE -->{ai_vision_prompt_memo}<!-- END_IF --></textarea>
                 <input type="hidden" name="config[]" value="ai_vision_prompt_memo" />
               </td>
             </tr>
             <tr>
               <th class="acms-admin-table-nowrap">ファイル名</th>
               <td>
-                <textarea name="ai_vision_prompt_filename" rows="2" class="acms-admin-form-width-full" placeholder="空欄なら既定文を使用">{ai_vision_prompt_filename}</textarea>
+                <textarea name="ai_vision_prompt_filename" rows="2" class="acms-admin-form-width-full"><!-- BEGIN_IF [{ai_vision_prompt_filename}/em/] -->内容を表す英小文字スラッグ（半角英数字とハイフンのみ。拡張子は書かない／元の拡張子は自動で保持。60文字以内、例: business-woman-office）<!-- ELSE -->{ai_vision_prompt_filename}<!-- END_IF --></textarea>
                 <input type="hidden" name="config[]" value="ai_vision_prompt_filename" />
               </td>
             </tr>
             <tr>
               <th class="acms-admin-table-nowrap">タグ</th>
               <td>
-                <textarea name="ai_vision_prompt_tags" rows="2" class="acms-admin-form-width-full" placeholder="空欄なら既定文を使用">{ai_vision_prompt_tags}</textarea>
+                <textarea name="ai_vision_prompt_tags" rows="2" class="acms-admin-form-width-full"><!-- BEGIN_IF [{ai_vision_prompt_tags}/em/] -->画像内容を表す日本語タグの配列（5個程度、各タグは10文字以内の短い語、JSON 配列）<!-- ELSE -->{ai_vision_prompt_tags}<!-- END_IF --></textarea>
                 <input type="hidden" name="config[]" value="ai_vision_prompt_tags" />
               </td>
             </tr>

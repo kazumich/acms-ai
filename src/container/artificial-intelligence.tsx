@@ -44,21 +44,39 @@ const TagResultRow = () => {
   )
 }
 
-export const ArtificialIntelligence = () => (
-  <table className="entryFormTable acms-admin-table-entry acms-admin-table">
-    <tbody>
-      <tr>
-        <th>タイトル候補</th>
-        <td>
-          <TitleResultRow />
-        </td>
-      </tr>
-      <tr>
-        <th>タグ候補</th>
-        <td>
-          <TagResultRow />
-        </td>
-      </tr>
-    </tbody>
-  </table>
-)
+interface ArtificialIntelligenceProps {
+  titleEnabled?: boolean
+  tagEnabled?: boolean
+}
+
+export const ArtificialIntelligence = ({
+  titleEnabled = true,
+  tagEnabled = true,
+}: ArtificialIntelligenceProps) => {
+  // どちらも無効なら何も表示しない
+  if (!titleEnabled && !tagEnabled) {
+    return null
+  }
+  return (
+    <table className="entryFormTable acms-admin-table-entry acms-admin-table">
+      <tbody>
+        {titleEnabled && (
+          <tr>
+            <th>タイトル候補</th>
+            <td>
+              <TitleResultRow />
+            </td>
+          </tr>
+        )}
+        {tagEnabled && (
+          <tr>
+            <th>タグ候補</th>
+            <td>
+              <TagResultRow />
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  )
+}
