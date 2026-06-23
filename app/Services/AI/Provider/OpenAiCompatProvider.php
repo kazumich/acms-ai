@@ -4,13 +4,15 @@ namespace Acms\Plugins\AI\Services\AI\Provider;
 
 use Acms\Plugins\AI\Services\AI\Support\HttpClient;
 use Acms\Plugins\AI\Services\AI\Support\StructuredJson;
+use Acms\Plugins\AI\Services\AI\Support\SseEmitter;
 
 /**
  * OpenAI 互換（Chat Completions）プロバイダ。base_url を差し替えて
  * さくらのAI Engine やローカル LLM などの互換エンドポイントを利用する。
  * 純正 OpenAI（Responses API）とは別物として扱う。
+ * チャットはバッファ方式（全文取得 → SSE で一括出力）で対応する。
  */
-class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface
+class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface, ChatStreamerInterface
 {
     private string $baseUrl;
 
@@ -29,7 +31,7 @@ class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface
 
     public function supports(string $capability): bool
     {
-        return $capability === Capability::TEXT_GENERATION;
+        return in_array($capability, [Capability::TEXT_GENERATION, Capability::CHAT_STREAM], true);
     }
 
     /**
@@ -62,12 +64,39 @@ class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface
      */
     public function generateStructuredList(string $instructions, array $messages, string $schemaName): array
     {
+        $text = $this->requestText($instructions . StructuredJson::OUTPUT_INSTRUCTION, $messages);
+        return StructuredJson::extractItems($text);
+    }
+
+    /**
+     * @param array<array{role: string, content: string}> $messages
+     */
+    public function streamChat(string $instructions, array $messages, ?string $previousResponseId = null): void
+    {
+        try {
+            $text = $this->requestText($instructions, $messages);
+            SseEmitter::delta($text);
+            SseEmitter::completed();
+        } catch (\Throwable $e) {
+            \AcmsLogger::error($e->getMessage());
+            SseEmitter::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Chat Completions を呼び出して本文テキストを返す。
+     *
+     * @param array<array{role: string, content: string}> $messages
+     * @throws \RuntimeException
+     */
+    private function requestText(string $instructions, array $messages): string
+    {
         if ($this->baseUrl === '') {
             throw new \RuntimeException('OpenAI互換エンドポイントのURLが設定されていません。');
         }
 
         $apiMessages = [
-            ['role' => 'system', 'content' => $instructions . StructuredJson::OUTPUT_INSTRUCTION],
+            ['role' => 'system', 'content' => $instructions],
         ];
         foreach ($messages as $msg) {
             $role = ($msg['role'] ?? 'user') === 'assistant' ? 'assistant' : 'user';
@@ -97,6 +126,6 @@ class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface
             throw new \RuntimeException('OpenAI互換 応答の解析に失敗しました: ' . mb_substr($resBody, 0, 300));
         }
 
-        return StructuredJson::extractItems($text);
+        return $text;
     }
 }

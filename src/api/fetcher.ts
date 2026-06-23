@@ -56,8 +56,8 @@ export const postRequest = async (props: PostRequestProps) => {
 interface PostStreamingRequestProps {
   url: string;
   data: {
-    input: string;
-    previousResponseId?: string;
+    // 会話履歴（[{ role, content }, ...] を JSON 文字列化したもの）
+    messages: string;
     [key: string]: unknown;
   };
   exec: string;
@@ -74,15 +74,8 @@ export const postStreamingRequest = async (
   const { url, data, exec, formToken } = props;
 
   const formData = new FormData();
-  formData.append('input', data.input);
-  if (data.previousResponseId) {
-    formData.append('previousResponseId', data.previousResponseId);
-  }
   Object.keys(data).forEach((key) => {
-    if (key !== 'input' && key !== 'previousResponseId') {
-      const value = data[key];
-      formData.append(key, String(value));
-    }
+    formData.append(key, String(data[key]));
   });
   formData.append(exec, 'exec');
   formData.append('formToken', formToken);

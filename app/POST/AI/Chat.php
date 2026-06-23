@@ -26,11 +26,10 @@ class Chat extends ACMS_POST
             ]);
         }
 
-        $input = $this->Post->get("input");
-        $previousResponseId = $this->Post->get("previousResponseId");
         $silent = $this->Post->get("silent") === '1';
+        $messages = $this->resolveMessages();
 
-        if (!$input) {
+        if (empty($messages)) {
             return $this->jsonResponse([
                 'message' => '無効なリクエストです。',
                 'errorCode' => 400
@@ -86,10 +85,6 @@ class Chat extends ACMS_POST
             "</correction>" .
             $silentInstruction;
 
-        $messages = [
-            ['role' => 'user', 'content' => $input]
-        ];
-
         // Stream output directly - must run before any other output
         if (ob_get_level()) {
             ob_end_clean();
@@ -103,13 +98,45 @@ class Chat extends ACMS_POST
         }
 
         try {
-            $provider->streamChat($instructions, $messages, $previousResponseId ?: null);
+            $provider->streamChat($instructions, $messages);
         } catch (\Exception $e) {
             \AcmsLogger::error($e->getMessage());
             echo "data: " . json_encode(['type' => 'error', 'message' => $e->getMessage()]) . "\n\n";
         }
 
         exit;
+    }
+
+    /**
+     * POST から会話履歴を取り出して正規化する。
+     * `messages`（role/content の配列 JSON）を優先し、無ければ単発 `input` を1メッセージとして扱う。
+     *
+     * @return array<array{role: string, content: string}>
+     */
+    private function resolveMessages(): array
+    {
+        $raw = $this->Post->get("messages");
+        $decoded = $raw ? json_decode($raw, true) : null;
+
+        if (!is_array($decoded)) {
+            $input = (string) $this->Post->get("input");
+            return $input !== '' ? [['role' => 'user', 'content' => $input]] : [];
+        }
+
+        $messages = [];
+        foreach ($decoded as $msg) {
+            if (!is_array($msg)) {
+                continue;
+            }
+            $content = isset($msg['content']) ? (string) $msg['content'] : '';
+            if ($content === '') {
+                continue;
+            }
+            $role = (isset($msg['role']) && $msg['role'] === 'assistant') ? 'assistant' : 'user';
+            $messages[] = ['role' => $role, 'content' => $content];
+        }
+
+        return $messages;
     }
 
     /**

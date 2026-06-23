@@ -4,12 +4,14 @@ namespace Acms\Plugins\AI\Services\AI\Provider;
 
 use Acms\Plugins\AI\Services\AI\Support\HttpClient;
 use Acms\Plugins\AI\Services\AI\Support\StructuredJson;
+use Acms\Plugins\AI\Services\AI\Support\SseEmitter;
 
 /**
  * Google Gemini プロバイダ。generateContent API を利用する。
  * 構造化出力はプロンプト指示＋寛容パースで候補一覧を得る。
+ * チャットはバッファ方式（全文取得 → SSE で一括出力）で対応する。
  */
-class GeminiProvider implements ProviderInterface, TextGeneratorInterface
+class GeminiProvider implements ProviderInterface, TextGeneratorInterface, ChatStreamerInterface
 {
     private const BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
@@ -26,7 +28,7 @@ class GeminiProvider implements ProviderInterface, TextGeneratorInterface
 
     public function supports(string $capability): bool
     {
-        return $capability === Capability::TEXT_GENERATION;
+        return in_array($capability, [Capability::TEXT_GENERATION, Capability::CHAT_STREAM], true);
     }
 
     /**
@@ -61,6 +63,33 @@ class GeminiProvider implements ProviderInterface, TextGeneratorInterface
      */
     public function generateStructuredList(string $instructions, array $messages, string $schemaName): array
     {
+        $text = $this->requestText($instructions . StructuredJson::OUTPUT_INSTRUCTION, $messages);
+        return StructuredJson::extractItems($text);
+    }
+
+    /**
+     * @param array<array{role: string, content: string}> $messages
+     */
+    public function streamChat(string $instructions, array $messages, ?string $previousResponseId = null): void
+    {
+        try {
+            $text = $this->requestText($instructions, $messages);
+            SseEmitter::delta($text);
+            SseEmitter::completed();
+        } catch (\Throwable $e) {
+            \AcmsLogger::error($e->getMessage());
+            SseEmitter::error($e->getMessage());
+        }
+    }
+
+    /**
+     * generateContent を呼び出して本文テキストを返す。
+     *
+     * @param array<array{role: string, content: string}> $messages
+     * @throws \RuntimeException
+     */
+    private function requestText(string $instructions, array $messages): string
+    {
         $contents = [];
         foreach ($messages as $msg) {
             $role = ($msg['role'] ?? 'user') === 'assistant' ? 'model' : 'user';
@@ -72,7 +101,7 @@ class GeminiProvider implements ProviderInterface, TextGeneratorInterface
 
         $body = json_encode([
             'systemInstruction' => [
-                'parts' => [['text' => $instructions . StructuredJson::OUTPUT_INSTRUCTION]],
+                'parts' => [['text' => $instructions]],
             ],
             'contents' => $contents,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -94,6 +123,6 @@ class GeminiProvider implements ProviderInterface, TextGeneratorInterface
             throw new \RuntimeException('Gemini 応答の解析に失敗しました: ' . mb_substr($resBody, 0, 300));
         }
 
-        return StructuredJson::extractItems($text);
+        return $text;
     }
 }

@@ -4,17 +4,19 @@ namespace Acms\Plugins\AI\Services\AI\Provider;
 
 use Acms\Plugins\AI\Services\AI\Support\HttpClient;
 use Acms\Plugins\AI\Services\AI\Support\StructuredJson;
+use Acms\Plugins\AI\Services\AI\Support\SseEmitter;
 
 /**
  * Claude（Anthropic）プロバイダ。Messages API を利用する。
  * 構造化出力には非対応のため、プロンプト指示＋寛容パースで候補一覧を得る。
+ * チャットはバッファ方式（全文取得 → SSE で一括出力）で対応する。
  */
-class AnthropicProvider implements ProviderInterface, TextGeneratorInterface
+class AnthropicProvider implements ProviderInterface, TextGeneratorInterface, ChatStreamerInterface
 {
     private const ENDPOINT = 'https://api.anthropic.com/v1/messages';
     private const MODELS_ENDPOINT = 'https://api.anthropic.com/v1/models?limit=100';
     private const API_VERSION = '2023-06-01';
-    private const MAX_TOKENS = 1024;
+    private const MAX_TOKENS = 4096;
 
     public function __construct(
         private string $apiKey,
@@ -29,7 +31,7 @@ class AnthropicProvider implements ProviderInterface, TextGeneratorInterface
 
     public function supports(string $capability): bool
     {
-        return $capability === Capability::TEXT_GENERATION;
+        return in_array($capability, [Capability::TEXT_GENERATION, Capability::CHAT_STREAM], true);
     }
 
     /**
@@ -63,6 +65,33 @@ class AnthropicProvider implements ProviderInterface, TextGeneratorInterface
      */
     public function generateStructuredList(string $instructions, array $messages, string $schemaName): array
     {
+        $text = $this->requestText($instructions . StructuredJson::OUTPUT_INSTRUCTION, $messages);
+        return StructuredJson::extractItems($text);
+    }
+
+    /**
+     * @param array<array{role: string, content: string}> $messages
+     */
+    public function streamChat(string $instructions, array $messages, ?string $previousResponseId = null): void
+    {
+        try {
+            $text = $this->requestText($instructions, $messages);
+            SseEmitter::delta($text);
+            SseEmitter::completed();
+        } catch (\Throwable $e) {
+            \AcmsLogger::error($e->getMessage());
+            SseEmitter::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Messages API を呼び出して本文テキストを返す。
+     *
+     * @param array<array{role: string, content: string}> $messages
+     * @throws \RuntimeException
+     */
+    private function requestText(string $system, array $messages): string
+    {
         $apiMessages = [];
         foreach ($messages as $msg) {
             $role = ($msg['role'] ?? 'user') === 'assistant' ? 'assistant' : 'user';
@@ -75,7 +104,7 @@ class AnthropicProvider implements ProviderInterface, TextGeneratorInterface
         $body = json_encode([
             'model' => $this->model,
             'max_tokens' => self::MAX_TOKENS,
-            'system' => $instructions . StructuredJson::OUTPUT_INSTRUCTION,
+            'system' => $system,
             'messages' => $apiMessages,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
@@ -95,6 +124,6 @@ class AnthropicProvider implements ProviderInterface, TextGeneratorInterface
             throw new \RuntimeException('Claude 応答の解析に失敗しました: ' . mb_substr($resBody, 0, 300));
         }
 
-        return StructuredJson::extractItems($text);
+        return $text;
     }
 }

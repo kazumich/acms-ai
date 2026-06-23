@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { postStreamingRequest } from '../../../api/fetcher'
 
 export interface ChatMessage {
@@ -34,10 +34,29 @@ function parseMessageBlocks(text: string): ChatMessage[] {
 
 interface ChatState {
   messages: ChatMessage[]
-  previousResponseId: string | null
 }
 
 const chatStateStore = new Map<string, ChatState>()
+
+/**
+ * 表示用メッセージ列を、API へ送る会話履歴（role/content）へ整形する。
+ * 連続する同一ロール（initial+本文、text+correction など）は結合し、
+ * user/assistant が交互になるようにする（Claude/Gemini の制約に合わせるため）。
+ */
+function buildHistory(msgs: ChatMessage[]): { role: 'user' | 'assistant'; content: string }[] {
+  const out: { role: 'user' | 'assistant'; content: string }[] = []
+  for (const m of msgs) {
+    const content = m.content.trim()
+    if (!content) continue
+    const last = out[out.length - 1]
+    if (last && last.role === m.role) {
+      last.content += `\n\n${content}`
+    } else {
+      out.push({ role: m.role, content })
+    }
+  }
+  return out
+}
 
 interface SSERawEvent {
   type?: string
@@ -53,7 +72,7 @@ interface SSERawEvent {
 async function processSSEStream(
   reader: ReadableStreamDefaultReader<Uint8Array>,
   onDelta: (accumulatedText: string) => void,
-  onCompleted: (text: string, responseId: string | undefined) => void,
+  onCompleted: (text: string) => void,
   onError: (message: string) => void,
 ): Promise<string> {
   const decoder = new TextDecoder()
@@ -90,7 +109,7 @@ async function processSSEStream(
         if (event.type === 'response.completed') {
           const completed = accumulatedText
           accumulatedText = ''
-          onCompleted(completed, event.response?.id)
+          onCompleted(completed)
         }
       } catch {
         // Skip malformed JSON
@@ -122,17 +141,13 @@ export function useChat({ onError, chatId, initialContent, silent }: UseChatOpti
   })
   const [streamingContent, setStreamingContent] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const previousResponseIdRef = useRef<string | null>(stored?.previousResponseId ?? null)
 
   const setMessagesAndSave = useCallback(
     (updater: (prev: ChatMessage[]) => ChatMessage[]) => {
       setMessages((prev) => {
         const next = updater(prev)
         if (chatId) {
-          chatStateStore.set(chatId, {
-            messages: next,
-            previousResponseId: previousResponseIdRef.current,
-          })
+          chatStateStore.set(chatId, { messages: next })
         }
         return next
       })
@@ -145,21 +160,14 @@ export function useChat({ onError, chatId, initialContent, silent }: UseChatOpti
       if (!content.trim() || isLoading) return
 
       const userMessage: ChatMessage = { id: crypto.randomUUID(), role: 'user', content: content.trim() }
+      const history = buildHistory([...messages, userMessage])
       setMessagesAndSave((prev) => [...prev, userMessage])
       setIsLoading(true)
       setStreamingContent('')
 
-      const isFirstMessage = !previousResponseIdRef.current
-      const apiInput =
-        isFirstMessage && initialContent
-          ? `${initialContent}\n\n${userMessage.content}`
-          : userMessage.content
-      const data: { input: string; previousResponseId?: string; silent?: string } = {
-        input: apiInput,
+      const data = {
+        messages: JSON.stringify(history),
         ...(silent && { silent: '1' }),
-      }
-      if (previousResponseIdRef.current) {
-        data.previousResponseId = previousResponseIdRef.current
       }
 
       const result = await postStreamingRequest({
@@ -192,8 +200,7 @@ export function useChat({ onError, chatId, initialContent, silent }: UseChatOpti
         const remaining = await processSSEStream(
           reader,
           (accumulatedText) => setStreamingContent(accumulatedText),
-          (text, responseId) => {
-            if (responseId) previousResponseIdRef.current = responseId
+          (text) => {
             if (text) {
               const blocks = parseMessageBlocks(text)
               setMessagesAndSave((msgs) => [...msgs, ...blocks])
@@ -216,7 +223,7 @@ export function useChat({ onError, chatId, initialContent, silent }: UseChatOpti
         setIsLoading(false)
       }
     },
-    [isLoading, initialContent, onError, setMessagesAndSave, silent]
+    [isLoading, messages, onError, setMessagesAndSave, silent]
   )
 
   const lastAssistantContent = useMemo(
