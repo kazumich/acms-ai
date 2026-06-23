@@ -45,6 +45,15 @@ class GenerateMediaFields extends ACMS_POST
         'tags' => 'ai_vision_prompt_tags',
     ];
 
+    /** 各項目の有効・無効（管理者設定）を保持する config キー */
+    private const VALID_CONFIG_KEYS = [
+        'alt' => 'ai_vision_valid_alt',
+        'caption' => 'ai_vision_valid_caption',
+        'memo' => 'ai_vision_valid_memo',
+        'file_name' => 'ai_vision_valid_filename',
+        'tags' => 'ai_vision_valid_tags',
+    ];
+
     /** 暴走した応答を防ぐための固定の安全上限（ユーザー向けの文字数指定はプロンプトで行う） */
     private const SAFETY_TEXT_MAX = 1000;
     private const SAFETY_SLUG_MAX = 80;
@@ -89,6 +98,15 @@ class GenerateMediaFields extends ACMS_POST
         }
 
         $config = (new ServicesAI())->getConfig();
+
+        // 管理者が「メディア プロンプト設定」で無効にした項目を除外する
+        $targets = array_values(array_filter($targets, function ($t) use ($config) {
+            return !empty($config->get(self::VALID_CONFIG_KEYS[$t]));
+        }));
+        if (count($targets) === 0) {
+            $this->respond(400, ['error' => '有効な生成項目がありません（管理画面のメディア プロンプト設定で有効化してください）']);
+            return $this->Post;
+        }
 
         // 要求項目ごとの指示文（設定値があれば使用、空なら内蔵既定）。JSON キーはコード側で付与。
         $lines = [];

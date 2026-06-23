@@ -19,6 +19,15 @@
   var CELL_CLASS = 'js-acms-ai-media-cell';
   var BTN_CLASS = 'js-acms-ai-media-gen-btn';
 
+  // 管理者が「メディア プロンプト設定」で有効化した項目のみ提供する（GET\AI\Config が出力）
+  var ADMIN_ENABLED = {
+    file_name: '{vision_valid_filename}' === 'true',
+    caption:   '{vision_valid_caption}' === 'true',
+    alt:       '{vision_valid_alt}' === 'true',
+    memo:      '{vision_valid_memo}' === 'true',
+    tags:      '{vision_valid_tags}' === 'true'
+  };
+
   // 生成対象フィールド定義（key・行内のフィールド要素を返す find）
   var FIELDS = [
     { key: 'file_name', find: function (mid, modal) { return document.getElementById('media-modal-filename-' + mid); } },
@@ -26,7 +35,10 @@
     { key: 'alt',       find: function (mid, modal) { return document.getElementById('media-modal-alt-' + mid); } },
     { key: 'memo',      find: function (mid, modal) { return document.getElementById('media-modal-memo-' + mid); } },
     { key: 'tags',      find: function (mid, modal) { return (modal || document).querySelector('input[id^="react-select"]'); } }
-  ];
+  ].filter(function (f) { return ADMIN_ENABLED[f.key]; });
+
+  // 管理者が有効化した項目が無ければ、メディア画面に何も追加しない
+  if (FIELDS.length === 0) { return; }
 
   /* ------- localStorage（チェック状態の永続化） ------- */
   function loadTargets() {

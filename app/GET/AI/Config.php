@@ -15,6 +15,13 @@ class Config extends AI
         $Tpl = new Template($this->tpl, new ACMS_Corrector());
         $titleEnabled = false;
         $tagEnabled = false;
+        $visionValid = [
+            'alt' => false,
+            'caption' => false,
+            'memo' => false,
+            'filename' => false,
+            'tags' => false,
+        ];
 
         try {
             $ServiceAI = new ServiceAI();
@@ -29,6 +36,11 @@ class Config extends AI
             // タイトル/タグ生成機能の有効・無効（フロントの表示制御に使う）
             $titleEnabled = !empty($config->get('ai_title_valid'));
             $tagEnabled = !empty($config->get('ai_tag_valid'));
+
+            // メディア各フィールドの有効・無効（メディア画面UIの表示制御に使う）
+            foreach (array_keys($visionValid) as $key) {
+                $visionValid[$key] = !empty($config->get('ai_vision_valid_' . $key));
+            }
         } catch (\Exception $e) {
         }
 
@@ -37,6 +49,11 @@ class Config extends AI
                 'authorized' => $this->authorized ? 'true' : 'false',
                 'title_enabled' => $titleEnabled ? 'true' : 'false',
                 'tag_enabled' => $tagEnabled ? 'true' : 'false',
+                'vision_valid_alt' => $visionValid['alt'] ? 'true' : 'false',
+                'vision_valid_caption' => $visionValid['caption'] ? 'true' : 'false',
+                'vision_valid_memo' => $visionValid['memo'] ? 'true' : 'false',
+                'vision_valid_filename' => $visionValid['filename'] ? 'true' : 'false',
+                'vision_valid_tags' => $visionValid['tags'] ? 'true' : 'false',
             ],
             $this->configField
         );
