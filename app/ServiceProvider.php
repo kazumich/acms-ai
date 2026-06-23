@@ -53,6 +53,9 @@ class ServiceProvider extends ACMS_App
         $inject->add('admin-module-config-Sample', PLUGIN_DIR . 'AI/template/config.html');
         $inject->add('admin-entry-field', PLUGIN_DIR . 'AI/template/admin/entry/edit.html');
 
+        // 全管理画面共通ローダー。<acms-ai-assistant-button> がある画面だけ本体を遅延ロードする。
+        $inject->add('admin-main', PLUGIN_DIR . 'AI/template/admin/loader.html');
+
         if (ADMIN === 'app_' . $this->menu) {
             $inject->add('admin-main', PLUGIN_DIR . 'AI/template/admin/main.html');
         }
