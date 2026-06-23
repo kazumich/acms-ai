@@ -12,7 +12,7 @@ use Acms\Plugins\AI\Services\AI\Support\SseEmitter;
  * 純正 OpenAI（Responses API）とは別物として扱う。
  * チャットはバッファ方式（全文取得 → SSE で一括出力）で対応する。
  */
-class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface, ChatStreamerInterface
+class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface, ChatStreamerInterface, VisionInterface
 {
     private string $baseUrl;
 
@@ -31,7 +31,53 @@ class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface,
 
     public function supports(string $capability): bool
     {
-        return in_array($capability, [Capability::TEXT_GENERATION, Capability::CHAT_STREAM], true);
+        return in_array(
+            $capability,
+            [Capability::TEXT_GENERATION, Capability::CHAT_STREAM, Capability::VISION],
+            true
+        );
+    }
+
+    public function describeImage(
+        string $systemPrompt,
+        string $userPrompt,
+        string $imageBase64,
+        string $mediaType
+    ): string {
+        if ($this->baseUrl === '') {
+            throw new \RuntimeException('OpenAI互換エンドポイントのURLが設定されていません。');
+        }
+
+        $dataUrl = 'data:' . $mediaType . ';base64,' . $imageBase64;
+        $body = json_encode([
+            'model' => $this->model,
+            'messages' => [
+                ['role' => 'system', 'content' => $systemPrompt],
+                [
+                    'role' => 'user',
+                    'content' => [
+                        ['type' => 'text', 'text' => $userPrompt],
+                        ['type' => 'image_url', 'image_url' => ['url' => $dataUrl]],
+                    ],
+                ],
+            ],
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        [$status, $resBody] = HttpClient::postJson($this->baseUrl . '/chat/completions', [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->apiKey,
+        ], $body);
+
+        if ($status >= 400) {
+            throw new \RuntimeException('OpenAI互換 API エラー (HTTP ' . $status . '): ' . mb_substr($resBody, 0, 300));
+        }
+
+        $data = json_decode($resBody, true);
+        $text = $data['choices'][0]['message']['content'] ?? null;
+        if (!is_string($text) || $text === '') {
+            throw new \RuntimeException('OpenAI互換 画像解析の応答を取得できませんでした: ' . mb_substr($resBody, 0, 300));
+        }
+        return $text;
     }
 
     /**

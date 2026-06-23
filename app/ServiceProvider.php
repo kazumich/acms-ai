@@ -56,6 +56,11 @@ class ServiceProvider extends ACMS_App
         // 全管理画面共通ローダー。<acms-ai-assistant-button> がある画面だけ本体を遅延ロードする。
         $inject->add('admin-main', PLUGIN_DIR . 'AI/template/admin/loader.html');
 
+        // メディア管理画面では、画像から各フィールドを生成する操作列を注入する。
+        if (ADMIN === 'media_index') {
+            $inject->add('admin-main', PLUGIN_DIR . 'AI/template/admin/media/inject.html');
+        }
+
         if (ADMIN === 'app_' . $this->menu) {
             $inject->add('admin-main', PLUGIN_DIR . 'AI/template/admin/main.html');
         }

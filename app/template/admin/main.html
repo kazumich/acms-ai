@@ -114,6 +114,57 @@
             </tr>
           </tbody>
         </table>
+
+        <h2 class="acms-admin-admin-title2"><!-- T -->メディアAI（画像）プロンプト設定<!-- /T --></h2>
+        <p class="acms-admin-text-helper acms-admin-margin-bottom-small">
+          メディア管理画面で画像から各フィールド（代替テキスト・キャプション・メモ・ファイル名・タグ）を生成する際の指示文です。空欄にすると内蔵の既定文を使用します。文字数や個数の指定は各指示文の中に直接書いてください。
+        </p>
+        <table class="acms-admin-table-admin-edit">
+          <tbody>
+            <tr>
+              <th class="acms-admin-table-nowrap">システムプロンプト</th>
+              <td>
+                <textarea name="ai_vision_system_prompt" rows="2" class="acms-admin-form-width-full" placeholder="空欄なら既定文（JSONのみ返すよう指示）を使用">{ai_vision_system_prompt}</textarea>
+                <input type="hidden" name="config[]" value="ai_vision_system_prompt" />
+              </td>
+            </tr>
+            <tr>
+              <th class="acms-admin-table-nowrap">代替テキスト</th>
+              <td>
+                <textarea name="ai_vision_prompt_alt" rows="2" class="acms-admin-form-width-full" placeholder="空欄なら既定文を使用">{ai_vision_prompt_alt}</textarea>
+                <input type="hidden" name="config[]" value="ai_vision_prompt_alt" />
+              </td>
+            </tr>
+            <tr>
+              <th class="acms-admin-table-nowrap">キャプション</th>
+              <td>
+                <textarea name="ai_vision_prompt_caption" rows="2" class="acms-admin-form-width-full" placeholder="空欄なら既定文を使用">{ai_vision_prompt_caption}</textarea>
+                <input type="hidden" name="config[]" value="ai_vision_prompt_caption" />
+              </td>
+            </tr>
+            <tr>
+              <th class="acms-admin-table-nowrap">メモ</th>
+              <td>
+                <textarea name="ai_vision_prompt_memo" rows="2" class="acms-admin-form-width-full" placeholder="空欄なら既定文を使用">{ai_vision_prompt_memo}</textarea>
+                <input type="hidden" name="config[]" value="ai_vision_prompt_memo" />
+              </td>
+            </tr>
+            <tr>
+              <th class="acms-admin-table-nowrap">ファイル名</th>
+              <td>
+                <textarea name="ai_vision_prompt_filename" rows="2" class="acms-admin-form-width-full" placeholder="空欄なら既定文を使用">{ai_vision_prompt_filename}</textarea>
+                <input type="hidden" name="config[]" value="ai_vision_prompt_filename" />
+              </td>
+            </tr>
+            <tr>
+              <th class="acms-admin-table-nowrap">タグ</th>
+              <td>
+                <textarea name="ai_vision_prompt_tags" rows="2" class="acms-admin-form-width-full" placeholder="空欄なら既定文を使用">{ai_vision_prompt_tags}</textarea>
+                <input type="hidden" name="config[]" value="ai_vision_prompt_tags" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- ================= API設定タブ ================= -->

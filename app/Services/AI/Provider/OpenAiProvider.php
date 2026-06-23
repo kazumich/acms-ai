@@ -10,7 +10,7 @@ use Acms\Plugins\AI\Services\AI\Endpoints\StreamingResponsesClient;
  * OpenAI（純正）プロバイダ。Responses API を利用する。
  * 構造化テキスト生成とストリーミングチャットに対応する。
  */
-class OpenAiProvider implements ProviderInterface, TextGeneratorInterface, ChatStreamerInterface
+class OpenAiProvider implements ProviderInterface, TextGeneratorInterface, ChatStreamerInterface, VisionInterface
 {
     public function __construct(
         private string $apiKey,
@@ -27,7 +27,37 @@ class OpenAiProvider implements ProviderInterface, TextGeneratorInterface, ChatS
 
     public function supports(string $capability): bool
     {
-        return in_array($capability, [Capability::TEXT_GENERATION, Capability::CHAT_STREAM], true);
+        return in_array(
+            $capability,
+            [Capability::TEXT_GENERATION, Capability::CHAT_STREAM, Capability::VISION],
+            true
+        );
+    }
+
+    public function describeImage(
+        string $systemPrompt,
+        string $userPrompt,
+        string $imageBase64,
+        string $mediaType
+    ): string {
+        $client = new ResponsesClient($this->apiKey, $this->model);
+        $client->createPayload();
+        $client->setInstructions($systemPrompt);
+        $dataUrl = 'data:' . $mediaType . ';base64,' . $imageBase64;
+        $client->addInput('user', [
+            $client->createTextContent($userPrompt),
+            $client->createImageContent($dataUrl),
+        ]);
+
+        $result = $client->request();
+        if ($result === null) {
+            throw new \RuntimeException('画像の解析に失敗しました。');
+        }
+        $text = ResponsesClient::extractText($result);
+        if (!is_string($text) || $text === '') {
+            throw new \RuntimeException('画像解析の応答を取得できませんでした。');
+        }
+        return $text;
     }
 
     /**

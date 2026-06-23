@@ -11,7 +11,7 @@ use Acms\Plugins\AI\Services\AI\Support\SseEmitter;
  * 構造化出力はプロンプト指示＋寛容パースで候補一覧を得る。
  * チャットはバッファ方式（全文取得 → SSE で一括出力）で対応する。
  */
-class GeminiProvider implements ProviderInterface, TextGeneratorInterface, ChatStreamerInterface
+class GeminiProvider implements ProviderInterface, TextGeneratorInterface, ChatStreamerInterface, VisionInterface
 {
     private const BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
@@ -28,7 +28,51 @@ class GeminiProvider implements ProviderInterface, TextGeneratorInterface, ChatS
 
     public function supports(string $capability): bool
     {
-        return in_array($capability, [Capability::TEXT_GENERATION, Capability::CHAT_STREAM], true);
+        return in_array(
+            $capability,
+            [Capability::TEXT_GENERATION, Capability::CHAT_STREAM, Capability::VISION],
+            true
+        );
+    }
+
+    public function describeImage(
+        string $systemPrompt,
+        string $userPrompt,
+        string $imageBase64,
+        string $mediaType
+    ): string {
+        $body = json_encode([
+            'systemInstruction' => [
+                'parts' => [['text' => $systemPrompt]],
+            ],
+            'contents' => [
+                [
+                    'role' => 'user',
+                    'parts' => [
+                        ['text' => $userPrompt],
+                        ['inline_data' => ['mime_type' => $mediaType, 'data' => $imageBase64]],
+                    ],
+                ],
+            ],
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        $url = self::BASE . '/models/' . rawurlencode($this->model)
+            . ':generateContent?key=' . rawurlencode($this->apiKey);
+
+        [$status, $resBody] = HttpClient::postJson($url, [
+            'Content-Type: application/json',
+        ], $body);
+
+        if ($status >= 400) {
+            throw new \RuntimeException('Gemini API エラー (HTTP ' . $status . '): ' . mb_substr($resBody, 0, 300));
+        }
+
+        $data = json_decode($resBody, true);
+        $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
+        if (!is_string($text) || $text === '') {
+            throw new \RuntimeException('Gemini 画像解析の応答を取得できませんでした: ' . mb_substr($resBody, 0, 300));
+        }
+        return $text;
     }
 
     /**
