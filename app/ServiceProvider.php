@@ -3,6 +3,7 @@
 namespace Acms\Plugins\AI;
 
 use ACMS_App;
+use Storage;
 use Acms\Services\Common\HookFactory;
 use Acms\Services\Common\InjectTemplate;
 
@@ -77,23 +78,44 @@ class ServiceProvider extends ACMS_App
     }
 
     /**
-     * インストールするときの処理
-     * データベーステーブルの初期化など
+     * インストールするときの処理。
+     * 既定プロンプト等を config.system.yaml へ追記する（#BEGIN_AIConfig〜#END_AIConfig）。
      *
      * @return void
      */
     public function install()
     {
+        $config = Storage::get(CONFIG_FILE);
+        $pluginConfig = Storage::get(PLUGIN_LIB_DIR . $this->name . '/config.system.yaml');
+        if (!$pluginConfig) {
+            return;
+        }
+        if (preg_match('/(#BEGIN_AIConfig)[\s\S]*(#END_AIConfig)/', $config)) {
+            // 既存ブロックを置換（再インストール時の二重記述を防ぐ）
+            Storage::put(
+                CONFIG_FILE,
+                preg_replace('/(#BEGIN_AIConfig)[\s\S]*(#END_AIConfig)/', $pluginConfig, $config)
+            );
+        } else {
+            Storage::put(CONFIG_FILE, $config . "\n" . $pluginConfig);
+        }
     }
 
     /**
-     * アンインストールするときの処理
-     * データベーステーブルの始末など
+     * アンインストールするときの処理。
+     * config.system.yaml に追記した設定ブロックを取り除く。
      *
      * @return void
      */
     public function uninstall()
     {
+        $config = Storage::get(CONFIG_FILE);
+        if ($config && preg_match('/(#BEGIN_AIConfig)[\s\S]*(#END_AIConfig)/', $config)) {
+            Storage::put(
+                CONFIG_FILE,
+                preg_replace('/\n?(#BEGIN_AIConfig)[\s\S]*(#END_AIConfig)\n?/', "\n", $config)
+            );
+        }
     }
 
     /**
