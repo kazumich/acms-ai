@@ -17,16 +17,11 @@ class Config extends AI
         try {
             $ServiceAI = new ServiceAI();
             $config = $ServiceAI->getConfig();
-            $cert = $ServiceAI->getCertification($config);
+            $cred = $ServiceAI->getActiveCredentials($config);
             $this->configField = Tpl::buildField($config, $Tpl);
 
-            if (
-                isset($cert['ai_api_key']) &&
-                isset($cert['ai_model']) &&
-                $ServiceAI->availableModel($cert['ai_model'])
-            ) {
+            if ($cred['apiKey'] && $cred['model']) {
                 $this->authorized = true;
-                $this->configField = Tpl::buildField($config, $Tpl);
             }
         } catch (\Exception $e) {
         }

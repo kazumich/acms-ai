@@ -5,7 +5,6 @@ namespace Acms\Plugins\AI\POST\AI;
 use ACMS_POST;
 use Acms\Plugins\AI\POST\AIPostTrait;
 use Acms\Plugins\AI\Services\AI as ServiceAI;
-use Acms\Plugins\AI\Services\AI\Endpoints\ResponsesClient;
 
 /**
  * ACMS_POST_AI_Tag
@@ -14,24 +13,31 @@ class Tag extends ACMS_POST
 {
     use AIPostTrait;
 
-    protected function injectAdditionalMessages(ResponsesClient $client): void
+    /**
+     * @return array<array{role: string, content: string}>
+     */
+    protected function prependMessages(): array
     {
         $tagNameAll = ServiceAI::getTagNameAll();
         $tagStr = implode(", ", $tagNameAll);
 
-        if (!empty($tagStr)) {
-            $client->addInput("user", [
-                $client->createTextContent(
-                    "This is a list of existing tags. "
+        if (empty($tagStr)) {
+            return [];
+        }
+
+        return [
+            [
+                'role' => 'user',
+                'content' => "This is a list of existing tags. "
                     . "When generating tags, please use the existing tag list notation"
                     . " for tags with duplicate meanings.\n\n"
-                    . "list of existing tags: \"\"\"\n$tagStr\n\"\"\""
-                )
-            ]);
-            $client->addInput("assistant", [
-                $client->createOutputTextContent("I got it. Please give me some prompts regarding tag generation.")
-            ]);
-        }
+                    . "list of existing tags: \"\"\"\n$tagStr\n\"\"\"",
+            ],
+            [
+                'role' => 'assistant',
+                'content' => "I got it. Please give me some prompts regarding tag generation.",
+            ],
+        ];
     }
 
     public function post(): mixed

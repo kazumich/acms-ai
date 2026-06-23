@@ -4,7 +4,8 @@ namespace Acms\Plugins\AI\POST\AI;
 
 use ACMS_POST;
 use Acms\Plugins\AI\POST\AIPostTrait;
-use Acms\Plugins\AI\Services\AI\Endpoints\StreamingResponsesClient;
+use Acms\Plugins\AI\Services\AI\Provider\ProviderFactory;
+use Acms\Plugins\AI\Services\AI\Provider\ChatStreamerInterface;
 
 /**
  * ACMS_POST_AI_Chat
@@ -36,15 +37,21 @@ class Chat extends ACMS_POST
             ]);
         }
 
-        $client = new StreamingResponsesClient($this->apiKey, $this->model);
-        $client->createPayload();
+        $provider = ProviderFactory::create();
+        if (!$provider instanceof ChatStreamerInterface) {
+            return $this->jsonResponse([
+                'message' => '選択中のAIプロバイダはチャットに対応していません。',
+                'errorCode' => 400
+            ]);
+        }
+
         $silentInstruction = $silent
             ? "\n\n## SILENT MODE (highest priority)\n" .
               "This is an automated request. " .
               "You MUST output the result wrapped in <correction>...</correction>. " .
               "Never omit the tag regardless of how simple or ambiguous the request is.\n"
             : "";
-        $client->setInstructions(
+        $instructions =
             "You are a helpful assistant. Respond in Japanese unless the user asks otherwise.\n" .
             "\n" .
             "## Text Processing Tasks\n" .
@@ -77,15 +84,11 @@ class Chat extends ACMS_POST
             "<correction>\n" .
             "The simplified text\n" .
             "</correction>" .
-            $silentInstruction
-        );
-        $client->addInput('user', [
-            $client->createTextContent($input)
-        ]);
+            $silentInstruction;
 
-        if ($previousResponseId) {
-            $client->setPreviousResponseId($previousResponseId);
-        }
+        $messages = [
+            ['role' => 'user', 'content' => $input]
+        ];
 
         // Stream output directly - must run before any other output
         if (ob_get_level()) {
@@ -100,7 +103,7 @@ class Chat extends ACMS_POST
         }
 
         try {
-            $client->stream();
+            $provider->streamChat($instructions, $messages, $previousResponseId ?: null);
         } catch (\Exception $e) {
             \AcmsLogger::error($e->getMessage());
             echo "data: " . json_encode(['type' => 'error', 'message' => $e->getMessage()]) . "\n\n";

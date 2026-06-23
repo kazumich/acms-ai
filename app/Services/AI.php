@@ -61,27 +61,6 @@ class AI
     }
 
     /**
-     * @param Field $config コンフィグのフィールド
-     * @return array|null $result 認証キーの配列｜失敗するとnull
-    */
-    public function getCertification(Field $config)
-    {
-        $organizationId = $config->get('ai_organization_id');
-        $projectId = $config->get('ai_project_id');
-        $apiKey = $config->get('ai_api_key');
-        $model = $config->get('ai_model');
-
-        $result = [
-            'ai_organization_id' => $organizationId,
-            'ai_project_id' => $projectId,
-            'ai_api_key' => $apiKey,
-            'ai_model' => $model,
-        ];
-
-        return $result;
-    }
-
-    /**
      * @return Field|null $result プロンプト｜失敗するとnull
     */
     public function getConfig()
@@ -89,6 +68,78 @@ class AI
         $config = Config::loadDefaultField();
         $config->overload(Config::loadBlogConfig(BID));
         return $config;
+    }
+
+    /**
+     * 旧 OpenAI 専用キー（ai_api_key 等）を新しい名前空間キー（ai_openai_* 等）へ
+     * 読み取り時にフォールバックする。DB は書き換えず、保存時に新キーで上書きされる。
+     *
+     * @param Field $config
+     * @return void
+     */
+    public function applyLegacyFallback(Field $config): void
+    {
+        $map = [
+            'ai_openai_api_key' => 'ai_api_key',
+            'ai_openai_organization_id' => 'ai_organization_id',
+            'ai_openai_project_id' => 'ai_project_id',
+            'ai_openai_model' => 'ai_model',
+        ];
+        foreach ($map as $new => $legacy) {
+            if (!$config->get($new) && $config->get($legacy)) {
+                $config->set($new, $config->get($legacy));
+            }
+        }
+    }
+
+    /**
+     * 現在選択中のプロバイダの認証情報を返す。
+     * provider / apiKey / model / organizationId / projectId / baseUrl を含む。
+     *
+     * キー: provider / apiKey / model / organizationId / projectId / baseUrl
+     *
+     * @param Field $config
+     * @return array<string, string>
+     */
+    public function getActiveCredentials(Field $config): array
+    {
+        $this->applyLegacyFallback($config);
+        $provider = $config->get('ai_provider') ?: 'openai';
+
+        $base = [
+            'provider' => $provider,
+            'apiKey' => '',
+            'model' => '',
+            'organizationId' => '',
+            'projectId' => '',
+            'baseUrl' => '',
+        ];
+
+        switch ($provider) {
+            case 'anthropic':
+                $base['apiKey'] = (string) $config->get('ai_anthropic_api_key');
+                $base['model'] = (string) $config->get('ai_anthropic_model');
+                break;
+            case 'gemini':
+                $base['apiKey'] = (string) $config->get('ai_gemini_api_key');
+                $base['model'] = (string) $config->get('ai_gemini_model');
+                break;
+            case 'compat':
+                $base['apiKey'] = (string) $config->get('ai_compat_api_key');
+                $base['model'] = (string) $config->get('ai_compat_model');
+                $base['baseUrl'] = (string) $config->get('ai_compat_base_url');
+                break;
+            case 'openai':
+            default:
+                $base['provider'] = 'openai';
+                $base['apiKey'] = (string) $config->get('ai_openai_api_key');
+                $base['model'] = (string) $config->get('ai_openai_model');
+                $base['organizationId'] = (string) $config->get('ai_openai_organization_id');
+                $base['projectId'] = (string) $config->get('ai_openai_project_id');
+                break;
+        }
+
+        return $base;
     }
 
     /**
