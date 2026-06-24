@@ -51,6 +51,10 @@ async function build() {
     await fs.copy(srcDir, pluginDir, {
       overwrite: true,
       filter: (src) => {
+        // .DS_Store / Thumbs.db などの OS 生成ファイルは全階層で除外
+        if (['.DS_Store', 'Thumbs.db'].includes(path.basename(src))) {
+          return false
+        }
         // ignoresリストに含まれるファイル・ディレクトリを除外
         const relativePath = path.relative(srcDir, src)
         return !ignores.some(ignore =>
