@@ -6,6 +6,7 @@ use ACMS_POST;
 use Acms\Plugins\AI\Services\AI as ServicesAI;
 use Acms\Plugins\AI\Services\AI\Provider\ProviderFactory;
 use Acms\Plugins\AI\Services\AI\Provider\VisionInterface;
+use Acms\Plugins\AI\Services\AI\Support\AuditLogger;
 use Acms\Plugins\AI\Services\AI\Support\ImageFetcher;
 
 /**
@@ -64,23 +65,26 @@ class GenerateMediaFields extends ACMS_POST
     {
         // 管理者のみ
         if (!sessionWithAdministration()) {
-            $this->respond(403, ['error' => '権限がありません']);
+            $this->respond(403, ['error' => '権限がありません'], ['reason' => 'permission_denied']);
             return $this->Post;
         }
 
         // CSRF
         if ($this->csrfTokenExists() && !$this->checkCsrfToken()) {
-            $this->respond(403, ['error' => '不正なトークンです']);
+            $this->respond(403, ['error' => '不正なトークンです'], ['reason' => 'invalid_csrf_token']);
             return $this->Post;
         }
 
         $imageUrl = trim((string) $this->Post->get('image_url', ''));
         if ($imageUrl === '') {
-            $this->respond(400, ['error' => '画像 URL が指定されていません']);
+            $this->respond(400, ['error' => '画像 URL が指定されていません'], ['reason' => 'missing_image_url']);
             return $this->Post;
         }
         if (!$this->isSameOrigin($imageUrl)) {
-            $this->respond(400, ['error' => 'このサイト上の画像のみ対象にできます']);
+            $this->respond(400, ['error' => 'このサイト上の画像のみ対象にできます'], [
+                'reason' => 'image_url_not_same_origin',
+                'image_url_host' => (string) parse_url($imageUrl, PHP_URL_HOST),
+            ]);
             return $this->Post;
         }
 
@@ -93,7 +97,9 @@ class GenerateMediaFields extends ACMS_POST
             }
         ));
         if (count($targets) === 0) {
-            $this->respond(400, ['error' => '生成する項目が選択されていません']);
+            $this->respond(400, ['error' => '生成する項目が選択されていません'], [
+                'reason' => 'no_targets',
+            ]);
             return $this->Post;
         }
 
@@ -104,7 +110,10 @@ class GenerateMediaFields extends ACMS_POST
             return !empty($config->get(self::VALID_CONFIG_KEYS[$t]));
         }));
         if (count($targets) === 0) {
-            $this->respond(400, ['error' => '有効な生成項目がありません（管理画面のメディア プロンプト設定で有効化してください）']);
+            $this->respond(400, ['error' => '有効な生成項目がありません（管理画面のメディア プロンプト設定で有効化してください）'], [
+                'reason' => 'no_enabled_targets',
+                'requested_targets' => $rawTargets,
+            ]);
             return $this->Post;
         }
 
@@ -128,20 +137,28 @@ class GenerateMediaFields extends ACMS_POST
         try {
             $provider = ProviderFactory::create();
             if (!$provider instanceof VisionInterface) {
-                $this->respond(400, ['error' => '選択中のAIプロバイダは画像解析（vision）に対応していません']);
+                $this->respond(400, ['error' => '選択中のAIプロバイダは画像解析（vision）に対応していません'], [
+                    'reason' => 'unsupported_provider',
+                ]);
                 return $this->Post;
             }
             [$base64, $mediaType] = ImageFetcher::fetch($imageUrl);
             $raw = $provider->describeImage($systemPrompt, $userPrompt, $base64, $mediaType);
         } catch (\Throwable $e) {
-            \AcmsLogger::error($e->getMessage());
-            $this->respond(400, ['error' => $e->getMessage()]);
+            $this->respond(400, ['error' => $e->getMessage()], [
+                'reason' => $e->getMessage(),
+                'exception' => get_class($e),
+                'targets' => $targets,
+            ]);
             return $this->Post;
         }
 
         $data = $this->decodeJson($raw);
         if ($data === null) {
-            $this->respond(502, ['error' => 'AI 応答の解析に失敗しました: ' . mb_substr($raw, 0, 200)]);
+            $this->respond(502, ['error' => 'AI 応答の解析に失敗しました: ' . mb_substr($raw, 0, 200)], [
+                'reason' => 'invalid_ai_response',
+                'targets' => $targets,
+            ]);
             return $this->Post;
         }
 
@@ -179,7 +196,10 @@ class GenerateMediaFields extends ACMS_POST
         }
 
         if (count($result) === 0) {
-            $this->respond(502, ['error' => 'AI から有効な値を取得できませんでした']);
+            $this->respond(502, ['error' => 'AI から有効な値を取得できませんでした'], [
+                'reason' => 'empty_ai_result',
+                'targets' => $targets,
+            ]);
             return $this->Post;
         }
 
@@ -271,10 +291,25 @@ class GenerateMediaFields extends ACMS_POST
      */
     private function isSameOrigin(string $url): bool
     {
-        $host = parse_url($url, PHP_URL_HOST);
-        if ($host === null || $host === false) {
-            return strpos($url, '/') === 0;
+        if (preg_match('/[\x00-\x1F\x7F]/', $url)) {
+            return false;
         }
+
+        $parts = parse_url($url);
+        if ($parts === false) {
+            return false;
+        }
+
+        $host = $parts['host'] ?? null;
+        if ($host === null || $host === '') {
+            return strpos($url, '/') === 0 && strpos($url, '//') !== 0;
+        }
+
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            return false;
+        }
+
         $currentHost = (string) ($_SERVER['HTTP_HOST'] ?? '');
         $currentHost = preg_replace('/:\d+$/', '', $currentHost) ?? $currentHost;
         return strcasecmp($host, $currentHost) === 0;
@@ -282,10 +317,19 @@ class GenerateMediaFields extends ACMS_POST
 
     /**
      * @param array<string, mixed> $body
+     * @param array<string, mixed> $context
      */
-    private function respond(int $code, array $body): void
+    private function respond(int $code, array $body, array $context = []): void
     {
         http_response_code($code);
+        if ($code >= 400) {
+            AuditLogger::logForStatus(
+                'ai_generate_media_fields',
+                (string) ($body['error'] ?? 'メディアAI生成に失敗しました。'),
+                $code,
+                $context
+            );
+        }
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($body, JSON_UNESCAPED_UNICODE);
         die();

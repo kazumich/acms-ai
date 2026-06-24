@@ -15,6 +15,11 @@ class Title extends ACMS_POST
 
     public function post(): mixed
     {
+        $guardResponse = $this->guardAdminRequest();
+        if ($guardResponse !== null) {
+            return $guardResponse;
+        }
+
         $this->initAiConfig();
 
         $article = $this->Post->get('article');
@@ -24,7 +29,9 @@ class Title extends ACMS_POST
 
         // ai_title_valid が無効なら、フロントで隠していても直接POSTは受け付けない（バックエンドゲート）。
         if (empty($config->get('ai_title_valid'))) {
-            return $this->errorResponse('タイトル生成は管理画面で有効化されていません。', [], 403);
+            return $this->errorResponse('タイトル生成は管理画面で有効化されていません。', [
+                'reason' => 'feature_disabled',
+            ], 403);
         }
 
         // プロンプトは保存値を使い、空なら既定文。

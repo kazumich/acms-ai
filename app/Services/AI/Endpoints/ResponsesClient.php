@@ -3,6 +3,7 @@
 namespace Acms\Plugins\AI\Services\AI\Endpoints;
 
 use Acms\Plugins\AI\Services\AI\EndpointTrait;
+use Acms\Plugins\AI\Services\AI\Support\AuditLogger;
 
 class ResponsesClient
 {
@@ -55,6 +56,9 @@ class ResponsesClient
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_POSTFIELDS => $json,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
         ]);
         $result = curl_exec($ch);
 
@@ -92,7 +96,10 @@ class ResponsesClient
             $parse = json_decode($result);
             return $parse;
         } catch (\Exception $e) {
-            \AcmsLogger::error($e->getMessage());
+            AuditLogger::error('ai_openai_responses', 'OpenAI Responses API リクエストに失敗しました。', [
+                'reason' => $e->getMessage(),
+                'exception' => get_class($e),
+            ]);
             return null;
         }
     }

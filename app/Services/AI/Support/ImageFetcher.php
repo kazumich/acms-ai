@@ -26,6 +26,9 @@ class ImageFetcher
     public static function fetch(string $url): array
     {
         [$status, $body] = HttpClient::get($url, [], 30);
+        if ($status >= 300 && $status < 400) {
+            throw new \RuntimeException('画像URLのリダイレクトは許可されていません');
+        }
         if ($status >= 400 || $body === '') {
             throw new \RuntimeException('画像の取得に失敗しました (HTTP ' . $status . ')');
         }

@@ -44,6 +44,9 @@ class StreamingResponsesClient
             CURLOPT_RETURNTRANSFER => false,
             CURLOPT_HTTPHEADER => $this->buildHeaders(),
             CURLOPT_POSTFIELDS => $json,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_WRITEFUNCTION => function ($ch, string $data): int {
                 echo $data;
                 if (ob_get_level()) {

@@ -5,6 +5,7 @@ namespace Acms\Plugins\AI\Services\AI\Provider;
 use Acms\Plugins\AI\Services\AI\Support\HttpClient;
 use Acms\Plugins\AI\Services\AI\Support\StructuredJson;
 use Acms\Plugins\AI\Services\AI\Support\SseEmitter;
+use Acms\Plugins\AI\Services\AI\Support\AuditLogger;
 
 /**
  * OpenAI 互換（Chat Completions）プロバイダ。base_url を差し替えて
@@ -21,7 +22,7 @@ class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface,
         private string $model,
         string $baseUrl
     ) {
-        $this->baseUrl = rtrim($baseUrl, '/');
+        $this->baseUrl = self::normalizeBaseUrl($baseUrl);
     }
 
     public function id(): string
@@ -124,7 +125,11 @@ class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface,
             SseEmitter::delta($text);
             SseEmitter::completed();
         } catch (\Throwable $e) {
-            \AcmsLogger::error($e->getMessage());
+            AuditLogger::error('ai_chat', 'OpenAI互換 チャット生成に失敗しました。', [
+                'provider' => $this->id(),
+                'reason' => $e->getMessage(),
+                'exception' => get_class($e),
+            ]);
             SseEmitter::error($e->getMessage());
         }
     }
@@ -173,5 +178,44 @@ class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface,
         }
 
         return $text;
+    }
+
+    private static function normalizeBaseUrl(string $baseUrl): string
+    {
+        $baseUrl = rtrim(trim($baseUrl), '/');
+        if ($baseUrl === '') {
+            return '';
+        }
+
+        $parts = parse_url($baseUrl);
+        if ($parts === false || empty($parts['scheme']) || empty($parts['host'])) {
+            throw new \RuntimeException('OpenAI互換エンドポイントのURLが不正です。');
+        }
+        if (isset($parts['user']) || isset($parts['pass'])) {
+            throw new \RuntimeException('OpenAI互換エンドポイントURLに認証情報は含められません。');
+        }
+
+        $scheme = strtolower((string) $parts['scheme']);
+        $host = (string) $parts['host'];
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            throw new \RuntimeException('OpenAI互換エンドポイントは http/https のみ指定できます。');
+        }
+        if ($scheme !== 'https' && !self::isLoopbackHost($host)) {
+            throw new \RuntimeException('OpenAI互換エンドポイントは https を指定してください。');
+        }
+
+        return $baseUrl;
+    }
+
+    private static function isLoopbackHost(string $host): bool
+    {
+        $host = strtolower(trim($host, '[]'));
+        if ($host === 'localhost' || $host === '::1') {
+            return true;
+        }
+        if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            return strpos($host, '127.') === 0;
+        }
+        return false;
     }
 }

@@ -60,6 +60,11 @@ class HttpClient
         ?string $body,
         int $timeout
     ): array {
+        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            throw new \RuntimeException('許可されていないURLスキームです。');
+        }
+
         $ch = curl_init($url);
         if ($ch === false) {
             throw new \RuntimeException('cURL の初期化に失敗しました');
@@ -69,9 +74,9 @@ class HttpClient
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => $timeout,
             CURLOPT_CONNECTTIMEOUT => 15,
-            CURLOPT_FOLLOWLOCATION => true,
-            // a-blog cms 標準 Http エンジンと同じく証明書検証は無効（ローカル/コンテナ環境向け）
-            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
         ];
         if ($method === 'POST') {
             $opts[CURLOPT_POST] = true;

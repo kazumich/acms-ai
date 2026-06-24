@@ -7,6 +7,7 @@ use SQL;
 use Field;
 use Config;
 use Exception;
+use Acms\Plugins\AI\Services\AI\Support\AuditLogger;
 
 class AI
 {
@@ -38,7 +39,10 @@ class AI
             $options = [
                 CURLOPT_URL => $url,
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_HTTPHEADER => $headers
+                CURLOPT_HTTPHEADER => $headers,
+                CURLOPT_FOLLOWLOCATION => false,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
             ];
             curl_setopt_array($ch, $options);
             $result = curl_exec($ch);
@@ -54,7 +58,11 @@ class AI
 
             $response = $this->getModelsByAuthResponse($decodedResult);
         } catch (\Exception $e) {
-            \AcmsLogger::error($e->getMessage());
+            AuditLogger::error('ai_list_models', 'OpenAI モデル取得に失敗しました。', [
+                'provider' => 'openai',
+                'reason' => $e->getMessage(),
+                'exception' => get_class($e),
+            ]);
         }
 
         return $response;
@@ -261,7 +269,10 @@ class AI
                 $result[] = $row["tag_name"];
             }
         } catch (Exception $e) {
-            \AcmsLogger::error($e->getMessage());
+            AuditLogger::error('ai_tag', '既存タグ一覧の取得に失敗しました。', [
+                'reason' => $e->getMessage(),
+                'exception' => get_class($e),
+            ]);
             return $result;
         }
 

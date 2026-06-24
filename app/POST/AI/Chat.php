@@ -6,6 +6,7 @@ use ACMS_POST;
 use Acms\Plugins\AI\POST\AIPostTrait;
 use Acms\Plugins\AI\Services\AI\Provider\ProviderFactory;
 use Acms\Plugins\AI\Services\AI\Provider\ChatStreamerInterface;
+use Acms\Plugins\AI\Services\AI\Support\AuditLogger;
 
 /**
  * ACMS_POST_AI_Chat
@@ -17,12 +18,16 @@ class Chat extends ACMS_POST
 
     public function post(): mixed
     {
+        $guardResponse = $this->guardAdminRequest();
+        if ($guardResponse !== null) {
+            return $guardResponse;
+        }
+
         $this->initAiConfig();
 
         if (!$this->apiKey || !$this->model) {
-            return $this->jsonResponse([
-                'message' => 'APIキーまたはモデルの設定がありません。',
-                'errorCode' => 500
+            return $this->errorJsonResponse('APIキーまたはモデルの設定がありません。', 500, [
+                'reason' => 'missing_api_key_or_model',
             ]);
         }
 
@@ -30,17 +35,15 @@ class Chat extends ACMS_POST
         $messages = $this->resolveMessages();
 
         if (empty($messages)) {
-            return $this->jsonResponse([
-                'message' => '無効なリクエストです。',
-                'errorCode' => 400
+            return $this->errorJsonResponse('無効なリクエストです。', 400, [
+                'reason' => 'empty_messages',
             ]);
         }
 
         $provider = ProviderFactory::create();
         if (!$provider instanceof ChatStreamerInterface) {
-            return $this->jsonResponse([
-                'message' => '選択中のAIプロバイダはチャットに対応していません。',
-                'errorCode' => 400
+            return $this->errorJsonResponse('選択中のAIプロバイダはチャットに対応していません。', 400, [
+                'reason' => 'unsupported_provider',
             ]);
         }
 
@@ -100,7 +103,11 @@ class Chat extends ACMS_POST
         try {
             $provider->streamChat($instructions, $messages);
         } catch (\Exception $e) {
-            \AcmsLogger::error($e->getMessage());
+            AuditLogger::error($this->aiLogAction(), 'チャットのストリーミングに失敗しました。', [
+                'reason' => $e->getMessage(),
+                'exception' => get_class($e),
+                'silent' => $silent,
+            ]);
             echo "data: " . json_encode(['type' => 'error', 'message' => $e->getMessage()]) . "\n\n";
         }
 
@@ -146,5 +153,18 @@ class Chat extends ACMS_POST
     private function jsonResponse(array $data): mixed
     {
         return \Common::responseJson($data);
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function errorJsonResponse(string $message, int $status, array $context = []): mixed
+    {
+        http_response_code($status);
+        if ($this->provider !== '' && !isset($context['provider'])) {
+            $context['provider'] = $this->provider;
+        }
+        AuditLogger::logForStatus($this->aiLogAction(), $message, $status, $context);
+        return $this->jsonResponse(['message' => $message, 'errorCode' => $status]);
     }
 }

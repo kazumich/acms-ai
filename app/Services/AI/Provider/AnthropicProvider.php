@@ -5,6 +5,7 @@ namespace Acms\Plugins\AI\Services\AI\Provider;
 use Acms\Plugins\AI\Services\AI\Support\HttpClient;
 use Acms\Plugins\AI\Services\AI\Support\StructuredJson;
 use Acms\Plugins\AI\Services\AI\Support\SseEmitter;
+use Acms\Plugins\AI\Services\AI\Support\AuditLogger;
 
 /**
  * Claude（Anthropic）プロバイダ。Messages API を利用する。
@@ -129,7 +130,11 @@ class AnthropicProvider implements ProviderInterface, TextGeneratorInterface, Ch
             SseEmitter::delta($text);
             SseEmitter::completed();
         } catch (\Throwable $e) {
-            \AcmsLogger::error($e->getMessage());
+            AuditLogger::error('ai_chat', 'Claude チャット生成に失敗しました。', [
+                'provider' => $this->id(),
+                'reason' => $e->getMessage(),
+                'exception' => get_class($e),
+            ]);
             SseEmitter::error($e->getMessage());
         }
     }
