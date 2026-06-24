@@ -17,6 +17,8 @@ class StructuredJson
         "\n\n## Output format (strict)\n" .
         "Respond with ONLY a JSON object of the exact form " .
         "{\"items\":[{\"content\":\"...\"},{\"content\":\"...\"}]} and nothing else. " .
+        "Each suggestion MUST be a separate object inside the \"items\" array; " .
+        "never repeat the \"content\" key within a single object. " .
         "Do not add explanations. Do not wrap the JSON in code fences.";
 
     /**
@@ -31,16 +33,49 @@ class StructuredJson
         $json = self::isolateJson($raw);
         $decoded = json_decode($json, true);
 
-        if (!is_array($decoded) || !isset($decoded['items']) || !is_array($decoded['items'])) {
-            throw new \RuntimeException('有効な形式のデータを取得できませんでした。: ' . mb_substr($raw, 0, 300));
+        if (is_array($decoded) && isset($decoded['items']) && is_array($decoded['items'])) {
+            $items = [];
+            foreach ($decoded['items'] as $item) {
+                if (is_array($item) && isset($item['content']) && is_string($item['content'])) {
+                    $items[] = ['content' => $item['content']];
+                } elseif (is_string($item)) {
+                    $items[] = ['content' => $item];
+                }
+            }
+            if (count($items) > 0) {
+                return $items;
+            }
+        }
+
+        // フォールバック: スキーマ逸脱（"items" が配列でない／1オブジェクトに "content" を
+        // 重複させた）や軽微な破損（末尾欠け）でも、応答テキストから "content" 値を救出する。
+        // 重複キーは json_decode で潰れて取りこぼすため、生テキストを正規表現で走査する。
+        $salvaged = self::salvageContents($raw);
+        if (count($salvaged) > 0) {
+            return $salvaged;
+        }
+
+        throw new \RuntimeException('有効な形式のデータを取得できませんでした。: ' . mb_substr($raw, 0, 300));
+    }
+
+    /**
+     * 応答テキストから "content": "..." の値をすべて取り出す（順序維持・重複キー対応）。
+     *
+     * @param string $raw
+     * @return array<array{content: string}>
+     */
+    private static function salvageContents(string $raw): array
+    {
+        if (!preg_match_all('/"content"\s*:\s*"((?:[^"\\\\]|\\\\.)*)"/u', $raw, $matches)) {
+            return [];
         }
 
         $items = [];
-        foreach ($decoded['items'] as $item) {
-            if (is_array($item) && isset($item['content']) && is_string($item['content'])) {
-                $items[] = ['content' => $item['content']];
-            } elseif (is_string($item)) {
-                $items[] = ['content' => $item];
+        foreach ($matches[1] as $escaped) {
+            // JSON エスケープを解くため文字列として decode する
+            $value = json_decode('"' . $escaped . '"');
+            if (is_string($value) && $value !== '') {
+                $items[] = ['content' => $value];
             }
         }
 

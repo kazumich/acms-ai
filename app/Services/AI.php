@@ -14,14 +14,16 @@ class AI
     public const SAKURA_AI_ENGINE_BASE_URL = 'https://api.ai.sakura.ad.jp/v1';
 
     /**
-     * @param string $organizationId ChatGPTの組織キー
-     * @param string $projectId ChatGPTのプロジェクトキー
+     * @param string $organizationId ChatGPTの組織キー（任意。空なら送らない）
+     * @param string $projectId ChatGPTのプロジェクトキー（任意。空なら送らない）
      * @param string $apiKey ChatGPTのAPIキー
      * @return array|null $response 使用できるモデルの配列、失敗するとnull
     */
     public function auth(string $organizationId, string $projectId, string $apiKey)
     {
-        if (!$organizationId || !$projectId || !$apiKey) {
+        // /v1/models は API キーだけで取得できる。Organization / Project は
+        // 複数組織・プロジェクト課金分離など必要な場合のみヘッダに付与する。
+        if (!$apiKey) {
             return null;
         }
 
@@ -30,9 +32,13 @@ class AI
         $headers = [
             "Content-Type: application/json",
             "Authorization: Bearer $apiKey",
-            "OpenAI-Organization: $organizationId",
-            "OpenAI-Project: $projectId"
         ];
+        if ($organizationId !== '') {
+            $headers[] = "OpenAI-Organization: $organizationId";
+        }
+        if ($projectId !== '') {
+            $headers[] = "OpenAI-Project: $projectId";
+        }
 
         $response = null;
         try {

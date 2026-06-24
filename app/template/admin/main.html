@@ -216,32 +216,28 @@
         <td colspan="2"><h2 class="acms-admin-admin-title2">OpenAI</h2>
         </td>
         </tr>
-          <tr>
-            <th class="acms-admin-table-nowrap">Organization ID</th>
-            <td>
-              <!-- BEGIN_IF [%{AI_OPENAI_ORG_FROM_ENV}/eq/1] -->
-              <span class="acms-admin-label acms-admin-label-default"><!-- T -->.env で設定済み<!-- /T --></span>
-              <code class="acms-admin-margin-left-mini">ACMS_AI_OPENAI_ORGANIZATION_ID</code>
-              <!-- ELSE -->
-              <input type="text" name="ai_openai_organization_id" class="acms-admin-form-width-full" placeholder="org-xxxxxxxx"
-                value="<!-- BEGIN_IF [{ai_openai_organization_id}/nem/] -->{ai_openai_organization_id}<!-- ELSE -->{ai_organization_id}<!-- END_IF -->" />
-              <input type="hidden" name="config[]" value="ai_openai_organization_id" />
-              <!-- END_IF -->
-            </td>
-          </tr>
-          <tr>
-            <th class="acms-admin-table-nowrap">Project ID</th>
-            <td>
-              <!-- BEGIN_IF [%{AI_OPENAI_PROJECT_FROM_ENV}/eq/1] -->
-              <span class="acms-admin-label acms-admin-label-default"><!-- T -->.env で設定済み<!-- /T --></span>
-              <code class="acms-admin-margin-left-mini">ACMS_AI_OPENAI_PROJECT_ID</code>
-              <!-- ELSE -->
-              <input type="text" name="ai_openai_project_id" class="acms-admin-form-width-full" placeholder="proj-xxxxxxxx"
-                value="<!-- BEGIN_IF [{ai_openai_project_id}/nem/] -->{ai_openai_project_id}<!-- ELSE -->{ai_project_id}<!-- END_IF -->" />
-              <input type="hidden" name="config[]" value="ai_openai_project_id" />
-              <!-- END_IF -->
-            </td>
-          </tr>
+          <!--
+            Organization ID / Project ID は通常は不要です。
+            project スコープのキー（sk-proj-…）なら不要で、生成では送信されず、モデル取得もAPIキーのみで動作します。
+            複数組織・旧ユーザーキーなどで必要な場合のみ、.env の
+            ACMS_AI_OPENAI_ORGANIZATION_ID / ACMS_AI_OPENAI_PROJECT_ID を設定してください。
+            管理画面で入力したい場合は、以下の2行をコメント解除して有効化します。
+
+            <tr>
+              <th class="acms-admin-table-nowrap">Organization ID</th>
+              <td>
+                <input type="text" name="ai_openai_organization_id" class="acms-admin-form-width-full" placeholder="org-xxxxxxxx" value="{ai_openai_organization_id}" />
+                <input type="hidden" name="config[]" value="ai_openai_organization_id" />
+              </td>
+            </tr>
+            <tr>
+              <th class="acms-admin-table-nowrap">Project ID</th>
+              <td>
+                <input type="text" name="ai_openai_project_id" class="acms-admin-form-width-full" placeholder="proj-xxxxxxxx" value="{ai_openai_project_id}" />
+                <input type="hidden" name="config[]" value="ai_openai_project_id" />
+              </td>
+            </tr>
+          -->
           <tr>
             <th class="acms-admin-table-nowrap">API KEY</th>
             <td>

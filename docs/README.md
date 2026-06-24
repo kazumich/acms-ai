@@ -70,8 +70,10 @@ API キーを管理画面で保存すると、設定フォームの HTML ソー�
 ```dotenv
 # OpenAI（純正）
 ACMS_AI_OPENAI_API_KEY=sk-xxxxxxxx
-ACMS_AI_OPENAI_ORGANIZATION_ID=org-xxxxxxxx
-ACMS_AI_OPENAI_PROJECT_ID=proj-xxxxxxxx
+# Organization ID / Project ID は通常不要（project スコープのキー sk-proj-… なら不要）。
+# 複数組織・旧ユーザーキーなどで必要な場合のみコメントを外して設定する。
+#ACMS_AI_OPENAI_ORGANIZATION_ID=org-xxxxxxxx
+#ACMS_AI_OPENAI_PROJECT_ID=proj-xxxxxxxx
 
 # Claude（Anthropic）
 ACMS_AI_ANTHROPIC_API_KEY=sk-ant-xxxxxxxx
