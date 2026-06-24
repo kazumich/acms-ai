@@ -22,7 +22,12 @@ class Title extends ACMS_POST
         $serviceAI = new ServicesAI();
         $config = $serviceAI->getConfig();
 
-        // ai_title_valid は機能の表示ON/OFF（フロント制御）。プロンプトは保存値を使い、空なら既定文。
+        // ai_title_valid が無効なら、フロントで隠していても直接POSTは受け付けない（バックエンドゲート）。
+        if (empty($config->get('ai_title_valid'))) {
+            return $this->errorResponse('タイトル生成は管理画面で有効化されていません。', [], 403);
+        }
+
+        // プロンプトは保存値を使い、空なら既定文。
         $customPrompt = (string) $config->get('ai_title_prompt');
         if (trim($customPrompt) === '') {
             $customPrompt = "- Please give 5 suggestions.\n- Please answer in Japanese.";

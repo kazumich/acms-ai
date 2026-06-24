@@ -12,7 +12,7 @@ class ServiceProvider extends ACMS_App
     /**
      * @var string
      */
-    public $version = '1.2.0';
+    public $version = '1.2.1';
 
     /**
      * @var string
@@ -52,13 +52,21 @@ class ServiceProvider extends ACMS_App
         $inject = InjectTemplate::singleton();
         $inject->add('admin-module-select', PLUGIN_DIR . 'AI/template/module/select.html');
         $inject->add('admin-module-config-Sample', PLUGIN_DIR . 'AI/template/config.html');
+        // エントリー編集の AI 機能 UI。これは BEGIN_MODULE 経由で {title_enabled} 等を
+        // 解決する必要があり、かつインライン JS を持たないため module 化したまま。
         $inject->add('admin-entry-field', PLUGIN_DIR . 'AI/template/admin/entry/edit.html');
 
+        // loader / メディア inject は素の <script> として注入する（BEGIN_MODULE で包むと
+        // Template::render() が JS 内の波括弧を壊すため）。authorized 判定は PHP 側で行う。
+        $authorized = (new Services\AI())->isAuthorized();
+
         // 全管理画面共通ローダー。<acms-ai-assistant-button> がある画面だけ本体を遅延ロードする。
-        $inject->add('admin-main', PLUGIN_DIR . 'AI/template/admin/loader.html');
+        if ($authorized) {
+            $inject->add('admin-main', PLUGIN_DIR . 'AI/template/admin/loader.html');
+        }
 
         // メディア管理画面では、画像から各フィールドを生成する操作列を注入する。
-        if (ADMIN === 'media_index') {
+        if (ADMIN === 'media_index' && $authorized) {
             $inject->add('admin-main', PLUGIN_DIR . 'AI/template/admin/media/inject.html');
         }
 

@@ -6,12 +6,14 @@
   - チェック状態は localStorage に保存・復元（初回は代替テキストのみ ON）
   - ボタンでチェック項目を 1 回の vision 呼び出しでまとめて生成・セット（ACMS_POST_AI_GenerateMediaFields）
   - タグは react-select のため、既存を全消去してから生成タグを擬似入力(値→Enter)で順次追加
-  プロバイダ未設定(authorized=false)のときは出さない。
+  プロバイダ未設定(authorized=false)のときは ServiceProvider 側で注入自体を行わない。
+
+  ※ BEGIN_MODULE で包むと Template::render() が走り、JS 内の「同一行で開閉する中身ありの
+     波括弧 {...}」を変数とみなして削除してしまう（object リテラルや new Event(..,{...}) が
+     壊れる）。そのためモジュール化せず素の <script> として注入する。各フィールドの有効フラグは
+     Hook が設定するグローバル変数 %{AI_VISION_VALID_*}（'1'/'0'）で受け取る。
 -->
-<!-- BEGIN_MODULE AI_Config -->
-<!-- BEGIN_IF [{authorized}/eq/true] -->
 <script>
-/* a-blog cms テンプレートエンジンを通るため ES5 で記述し、波括弧1単語({xxx})を避ける。 */
 (function () {
   'use strict';
 
@@ -19,13 +21,13 @@
   var CELL_CLASS = 'js-acms-ai-media-cell';
   var BTN_CLASS = 'js-acms-ai-media-gen-btn';
 
-  // 管理者が「メディア プロンプト設定」で有効化した項目のみ提供する（GET\AI\Config が出力）
+  // 管理者が「メディア プロンプト設定」で有効化した項目のみ提供する（Hook がグローバル変数で出力）
   var ADMIN_ENABLED = {
-    file_name: '{vision_valid_filename}' === 'true',
-    caption:   '{vision_valid_caption}' === 'true',
-    alt:       '{vision_valid_alt}' === 'true',
-    memo:      '{vision_valid_memo}' === 'true',
-    tags:      '{vision_valid_tags}' === 'true'
+    file_name: '%{AI_VISION_VALID_FILENAME}' === '1',
+    caption:   '%{AI_VISION_VALID_CAPTION}' === '1',
+    alt:       '%{AI_VISION_VALID_ALT}' === '1',
+    memo:      '%{AI_VISION_VALID_MEMO}' === '1',
+    tags:      '%{AI_VISION_VALID_TAGS}' === '1'
   };
 
   // 生成対象フィールド定義（key・行内のフィールド要素を返す find）
@@ -330,5 +332,3 @@
   startObserver();
 })();
 </script>
-<!-- END_IF -->
-<!-- END_MODULE AI_Config -->

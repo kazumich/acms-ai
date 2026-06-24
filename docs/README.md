@@ -56,6 +56,34 @@ a-blog cms の AI機能を拡張するアプリです。
 
 認証が完了したら、「プロンプト設定」でタイトル生成・タグ生成の機能を有効にし、必要に応じてカスタムプロンプトを設定してください。
 
+### `.env` で API キーを設定する（推奨・セキュリティ対策）
+
+API キーを管理画面で保存すると、設定フォームの HTML ソースにキーの値が出力されます。第三者にソースを見られるとキーが漏洩し、AI の利用料金が不正に消費される恐れがあります。
+
+これを避けるため、API キーは a-blog cms のサイト直下にある **`.env`** に記述できます。`.env` に記述したキーは管理画面に入力欄として出力されず、「**.env で設定済み**」というラベルが表示されます（ブラウザにキーを一切送りません）。
+
+`.env`（サイト直下、docroot と同じ階層）に以下のように記述します。利用するプロバイダの行だけでかまいません。
+
+```dotenv
+# OpenAI（純正）
+ACMS_AI_OPENAI_API_KEY=sk-xxxxxxxx
+ACMS_AI_OPENAI_ORGANIZATION_ID=org-xxxxxxxx
+ACMS_AI_OPENAI_PROJECT_ID=proj-xxxxxxxx
+
+# Claude（Anthropic）
+ACMS_AI_ANTHROPIC_API_KEY=sk-ant-xxxxxxxx
+
+# Google Gemini
+ACMS_AI_GEMINI_API_KEY=AIza...
+
+# OpenAI 互換（さくらの AI Engine 等）
+ACMS_AI_COMPAT_API_KEY=xxxxxxxx
+```
+
+- **優先順位**: `.env` に値があれば、管理画面（DB）に保存された値より `.env` が優先されます。
+- **モデル選択**は引き続き管理画面で行います（`.env` 管理のプロバイダでも「モデル取得」はサーバ側で `.env` のキーを使って動作します）。
+- `.env` を変更したら、設定が反映されないことがあるためコンフィグキャッシュのクリアをお試しください。
+
 ## エントリー編集AI機能
 「AI機能」ラベルのアコーディオンがSEO設定の下に追加されます。
 

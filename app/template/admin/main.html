@@ -56,10 +56,10 @@
             </th>
             <td>
               <select name="ai_provider" class="acms-admin-form-width-full">
-                <!-- BEGIN_IF [{ai_openai_api_key}/nem/_or_/{ai_api_key}/nem/] --><option value="openai" {ai_provider:selected#openai}<!-- BEGIN_IF [{ai_provider}/em/] -->selected<!-- END_IF -->>OpenAI（純正 / Responses API）</option><!-- END_IF -->
-                <!-- BEGIN_IF [{ai_anthropic_api_key}/nem/] --><option value="anthropic" {ai_provider:selected#anthropic}>Claude（Anthropic）</option><!-- END_IF -->
-                <!-- BEGIN_IF [{ai_gemini_api_key}/nem/] --><option value="gemini" {ai_provider:selected#gemini}>Google Gemini</option><!-- END_IF -->
-                <!-- BEGIN_IF [{ai_compat_api_key}/nem/] --><option value="compat" {ai_provider:selected#compat}>OpenAI互換（さくらのAI Engine等）</option><!-- END_IF -->
+                <!-- BEGIN_IF [{ai_openai_api_key}/nem/_or_/{ai_api_key}/nem/_or_/%{AI_OPENAI_KEY_FROM_ENV}/eq/1] --><option value="openai" {ai_provider:selected#openai}<!-- BEGIN_IF [{ai_provider}/em/] -->selected<!-- END_IF -->>OpenAI（純正 / Responses API）</option><!-- END_IF -->
+                <!-- BEGIN_IF [{ai_anthropic_api_key}/nem/_or_/%{AI_ANTHROPIC_KEY_FROM_ENV}/eq/1] --><option value="anthropic" {ai_provider:selected#anthropic}>Claude（Anthropic）</option><!-- END_IF -->
+                <!-- BEGIN_IF [{ai_gemini_api_key}/nem/_or_/%{AI_GEMINI_KEY_FROM_ENV}/eq/1] --><option value="gemini" {ai_provider:selected#gemini}>Google Gemini</option><!-- END_IF -->
+                <!-- BEGIN_IF [{ai_compat_api_key}/nem/_or_/%{AI_COMPAT_KEY_FROM_ENV}/eq/1] --><option value="compat" {ai_provider:selected#compat}>OpenAI互換（さくらのAI Engine等）</option><!-- END_IF -->
               </select>
               <input type="hidden" name="config[]" value="ai_provider" />
               <p class="acms-admin-text-helper acms-admin-margin-top-mini">
@@ -199,25 +199,40 @@
           <tr>
             <th class="acms-admin-table-nowrap">Organization ID</th>
             <td>
+              <!-- BEGIN_IF [%{AI_OPENAI_ORG_FROM_ENV}/eq/1] -->
+              <span class="acms-admin-label acms-admin-label-default"><!-- T -->.env で設定済み<!-- /T --></span>
+              <code class="acms-admin-margin-left-mini">ACMS_AI_OPENAI_ORGANIZATION_ID</code>
+              <!-- ELSE -->
               <input type="text" name="ai_openai_organization_id" class="acms-admin-form-width-full" placeholder="org-xxxxxxxx"
                 value="<!-- BEGIN_IF [{ai_openai_organization_id}/nem/] -->{ai_openai_organization_id}<!-- ELSE -->{ai_organization_id}<!-- END_IF -->" />
               <input type="hidden" name="config[]" value="ai_openai_organization_id" />
+              <!-- END_IF -->
             </td>
           </tr>
           <tr>
             <th class="acms-admin-table-nowrap">Project ID</th>
             <td>
+              <!-- BEGIN_IF [%{AI_OPENAI_PROJECT_FROM_ENV}/eq/1] -->
+              <span class="acms-admin-label acms-admin-label-default"><!-- T -->.env で設定済み<!-- /T --></span>
+              <code class="acms-admin-margin-left-mini">ACMS_AI_OPENAI_PROJECT_ID</code>
+              <!-- ELSE -->
               <input type="text" name="ai_openai_project_id" class="acms-admin-form-width-full" placeholder="proj-xxxxxxxx"
                 value="<!-- BEGIN_IF [{ai_openai_project_id}/nem/] -->{ai_openai_project_id}<!-- ELSE -->{ai_project_id}<!-- END_IF -->" />
               <input type="hidden" name="config[]" value="ai_openai_project_id" />
+              <!-- END_IF -->
             </td>
           </tr>
           <tr>
             <th class="acms-admin-table-nowrap">API KEY</th>
             <td>
+              <!-- BEGIN_IF [%{AI_OPENAI_KEY_FROM_ENV}/eq/1] -->
+              <span class="acms-admin-label acms-admin-label-default"><!-- T -->.env で設定済み<!-- /T --></span>
+              <code class="acms-admin-margin-left-mini">ACMS_AI_OPENAI_API_KEY</code>
+              <!-- ELSE -->
               <input type="password" name="ai_openai_api_key" class="acms-admin-form-width-full" autocomplete="off" placeholder="sk-xxxxxxxx"
                 value="<!-- BEGIN_IF [{ai_openai_api_key}/nem/] -->{ai_openai_api_key}<!-- ELSE -->{ai_api_key}<!-- END_IF -->" />
               <input type="hidden" name="config[]" value="ai_openai_api_key" />
+              <!-- END_IF -->
             </td>
           </tr>
           <tr>
@@ -241,8 +256,13 @@
           <tr>
             <th class="acms-admin-table-nowrap">API KEY</th>
             <td>
+              <!-- BEGIN_IF [%{AI_ANTHROPIC_KEY_FROM_ENV}/eq/1] -->
+              <span class="acms-admin-label acms-admin-label-default"><!-- T -->.env で設定済み<!-- /T --></span>
+              <code class="acms-admin-margin-left-mini">ACMS_AI_ANTHROPIC_API_KEY</code>
+              <!-- ELSE -->
               <input type="password" name="ai_anthropic_api_key" value="{ai_anthropic_api_key}" class="acms-admin-form-width-full" autocomplete="off" placeholder="sk-ant-xxxxxxxx" />
               <input type="hidden" name="config[]" value="ai_anthropic_api_key" />
+              <!-- END_IF -->
             </td>
           </tr>
           <tr>
@@ -262,8 +282,13 @@
           <tr>
             <th class="acms-admin-table-nowrap">API KEY</th>
             <td>
+              <!-- BEGIN_IF [%{AI_GEMINI_KEY_FROM_ENV}/eq/1] -->
+              <span class="acms-admin-label acms-admin-label-default"><!-- T -->.env で設定済み<!-- /T --></span>
+              <code class="acms-admin-margin-left-mini">ACMS_AI_GEMINI_API_KEY</code>
+              <!-- ELSE -->
               <input type="password" name="ai_gemini_api_key" value="{ai_gemini_api_key}" class="acms-admin-form-width-full" autocomplete="off" placeholder="AIza..." />
               <input type="hidden" name="config[]" value="ai_gemini_api_key" />
+              <!-- END_IF -->
             </td>
           </tr>
           <tr>
@@ -294,8 +319,13 @@
           <tr>
             <th class="acms-admin-table-nowrap">API KEY</th>
             <td>
+              <!-- BEGIN_IF [%{AI_COMPAT_KEY_FROM_ENV}/eq/1] -->
+              <span class="acms-admin-label acms-admin-label-default"><!-- T -->.env で設定済み<!-- /T --></span>
+              <code class="acms-admin-margin-left-mini">ACMS_AI_COMPAT_API_KEY</code>
+              <!-- ELSE -->
               <input type="password" name="ai_compat_api_key" value="{ai_compat_api_key}" class="acms-admin-form-width-full" autocomplete="off" />
               <input type="hidden" name="config[]" value="ai_compat_api_key" />
+              <!-- END_IF -->
             </td>
           </tr>
           <tr>

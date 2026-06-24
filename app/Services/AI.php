@@ -93,8 +93,26 @@ class AI
     }
 
     /**
+     * .env で設定できるクレデンシャルの環境変数名（provider → field → 変数名）。
+     * .env に値があれば DB 保存値より優先する（管理画面にキーを出力せず漏洩を防ぐ）。
+     *
+     * @var array<string, array<string, string>>
+     */
+    private const ENV_KEYS = [
+        'openai' => [
+            'apiKey' => 'ACMS_AI_OPENAI_API_KEY',
+            'organizationId' => 'ACMS_AI_OPENAI_ORGANIZATION_ID',
+            'projectId' => 'ACMS_AI_OPENAI_PROJECT_ID',
+        ],
+        'anthropic' => ['apiKey' => 'ACMS_AI_ANTHROPIC_API_KEY'],
+        'gemini' => ['apiKey' => 'ACMS_AI_GEMINI_API_KEY'],
+        'compat' => ['apiKey' => 'ACMS_AI_COMPAT_API_KEY'],
+    ];
+
+    /**
      * 現在選択中のプロバイダの認証情報を返す。
      * provider / apiKey / model / organizationId / projectId / baseUrl を含む。
+     * .env に該当キーがあれば DB 値より優先する。
      *
      * キー: provider / apiKey / model / organizationId / projectId / baseUrl
      *
@@ -139,7 +157,60 @@ class AI
                 break;
         }
 
+        // .env に設定があれば DB 値より優先する（漏洩対策。キー類は管理画面に出さない運用）。
+        foreach (self::ENV_KEYS[$base['provider']] ?? [] as $field => $envName) {
+            $envValue = env($envName);
+            if ($envValue !== '') {
+                $base[$field] = $envValue;
+            }
+        }
+
         return $base;
+    }
+
+    /**
+     * 指定プロバイダの API キーが .env で設定されているか。
+     * 管理画面の入力欄出し分け（Hook→main.html）やモデル取得（ListModels）で利用する。
+     *
+     * @param string $provider
+     * @param string $field provider 内のフィールド名（apiKey / organizationId / projectId）
+     * @return bool
+     */
+    public function isFromEnv(string $provider, string $field = 'apiKey'): bool
+    {
+        $envName = self::ENV_KEYS[$provider][$field] ?? '';
+        return $envName !== '' && env($envName) !== '';
+    }
+
+    /**
+     * 指定プロバイダ・フィールドの .env 値を返す（無ければ空文字）。
+     *
+     * @param string $provider
+     * @param string $field
+     * @return string
+     */
+    public function getEnvValue(string $provider, string $field = 'apiKey'): string
+    {
+        $envName = self::ENV_KEYS[$provider][$field] ?? '';
+        return $envName === '' ? '' : env($envName);
+    }
+
+    /**
+     * 現在選択中のプロバイダで AI 機能が利用可能か（API キーとモデルが揃っているか）。
+     * テンプレ注入の可否判定（ServiceProvider）等で利用する。
+     *
+     * @param Field|null $config 省略時は getConfig() で取得する
+     * @return bool
+     */
+    public function isAuthorized(?Field $config = null): bool
+    {
+        try {
+            $config = $config ?: $this->getConfig();
+            $cred = $this->getActiveCredentials($config);
+            return !empty($cred['apiKey']) && !empty($cred['model']);
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     /**

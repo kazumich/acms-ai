@@ -54,7 +54,12 @@ class Tag extends ACMS_POST
         $serviceAI = new ServiceAI();
         $config = $serviceAI->getConfig();
 
-        // ai_tag_valid は機能の表示ON/OFF（フロント制御）。プロンプトは保存値を使い、空なら既定文。
+        // ai_tag_valid が無効なら、フロントで隠していても直接POSTは受け付けない（バックエンドゲート）。
+        if (empty($config->get('ai_tag_valid'))) {
+            return $this->errorResponse('タグ生成は管理画面で有効化されていません。', [], 403);
+        }
+
+        // プロンプトは保存値を使い、空なら既定文。
         $customPrompt = (string) $config->get('ai_tag_prompt');
         if (trim($customPrompt) === '') {
             $customPrompt = 'Please answer in Japanese.';

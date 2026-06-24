@@ -48,9 +48,9 @@ trait AIPostTrait
     /**
      * @param array<string, mixed> $logContext
      */
-    private function errorResponse(string $message, array $logContext = []): mixed
+    private function errorResponse(string $message, array $logContext = [], int $errorCode = 500): mixed
     {
-        $response = ['message' => $message, 'errorCode' => 500];
+        $response = ['message' => $message, 'errorCode' => $errorCode];
         \AcmsLogger::notice($message, empty($logContext) ? $response : $logContext);
         return Common::responseJson($response);
     }
