@@ -111,7 +111,17 @@ class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface,
      */
     public function generateStructuredList(string $instructions, array $messages, string $schemaName): array
     {
-        $text = $this->requestText($instructions . StructuredJson::OUTPUT_INSTRUCTION, $messages);
+        $systemPrompt = $instructions . StructuredJson::OUTPUT_INSTRUCTION;
+
+        // 構造化生成では JSON モード（response_format: json_object）を要求し、
+        // JSON 以外の出力や重複出力を抑制する。response_format 非対応の互換
+        // エンドポイントでは HTTP エラーになり得るため、その場合は付与なしで再試行する。
+        try {
+            $text = $this->requestText($systemPrompt, $messages, true);
+        } catch (\RuntimeException $e) {
+            $text = $this->requestText($systemPrompt, $messages, false);
+        }
+
         return StructuredJson::extractItems($text);
     }
 
@@ -130,7 +140,7 @@ class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface,
                 'reason' => $e->getMessage(),
                 'exception' => get_class($e),
             ]);
-            SseEmitter::error($e->getMessage());
+            SseEmitter::error('AIの応答を取得できませんでした。');
         }
     }
 
@@ -138,9 +148,10 @@ class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface,
      * Chat Completions を呼び出して本文テキストを返す。
      *
      * @param array<array{role: string, content: string}> $messages
+     * @param bool $jsonObject true なら response_format: json_object を要求する（構造化生成用）
      * @throws \RuntimeException
      */
-    private function requestText(string $instructions, array $messages): string
+    private function requestText(string $instructions, array $messages, bool $jsonObject = false): string
     {
         if ($this->baseUrl === '') {
             throw new \RuntimeException('OpenAI互換エンドポイントのURLが設定されていません。');
@@ -157,10 +168,14 @@ class OpenAiCompatProvider implements ProviderInterface, TextGeneratorInterface,
             ];
         }
 
-        $body = json_encode([
+        $payload = [
             'model' => $this->model,
             'messages' => $apiMessages,
-        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        ];
+        if ($jsonObject) {
+            $payload['response_format'] = ['type' => 'json_object'];
+        }
+        $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         [$status, $resBody] = HttpClient::postJson($this->baseUrl . '/chat/completions', [
             'Content-Type: application/json',

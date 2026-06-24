@@ -17,4 +17,7 @@ ai_vision_prompt_caption: "画像の短いキャプション（日本語、100�
 ai_vision_prompt_memo: "管理者向けの内部メモ（日本語、200文字以内、被写体・用途・キーワードなど）"
 ai_vision_prompt_filename: "内容を表す英小文字スラッグ（半角英数字とハイフンのみ。拡張子は書かない／元の拡張子は自動で保持。60文字以内、例: business-woman-office）"
 ai_vision_prompt_tags: "画像内容を表す日本語タグの配列（5個程度、各タグは10文字以内の短い語、JSON 配列）"
+
+# さくらのAI Engine（OpenAI互換）の既定エンドポイント
+ai_compat_base_url: "https://api.ai.sakura.ad.jp/v1"
 #END_AIConfig

@@ -105,6 +105,13 @@ class GenerateMediaFields extends ACMS_POST
 
         $config = (new ServicesAI())->getConfig();
 
+        if (empty($config->get('ai_vision_valid'))) {
+            $this->respond(403, ['error' => 'メディアAI生成は管理画面で有効化されていません。'], [
+                'reason' => 'feature_disabled',
+            ]);
+            return $this->Post;
+        }
+
         // 管理者が「メディア プロンプト設定」で無効にした項目を除外する
         $targets = array_values(array_filter($targets, function ($t) use ($config) {
             return !empty($config->get(self::VALID_CONFIG_KEYS[$t]));
@@ -145,7 +152,7 @@ class GenerateMediaFields extends ACMS_POST
             [$base64, $mediaType] = ImageFetcher::fetch($imageUrl);
             $raw = $provider->describeImage($systemPrompt, $userPrompt, $base64, $mediaType);
         } catch (\Throwable $e) {
-            $this->respond(400, ['error' => $e->getMessage()], [
+            $this->respond(400, ['error' => '画像解析に失敗しました。'], [
                 'reason' => $e->getMessage(),
                 'exception' => get_class($e),
                 'targets' => $targets,
@@ -155,7 +162,7 @@ class GenerateMediaFields extends ACMS_POST
 
         $data = $this->decodeJson($raw);
         if ($data === null) {
-            $this->respond(502, ['error' => 'AI 応答の解析に失敗しました: ' . mb_substr($raw, 0, 200)], [
+            $this->respond(502, ['error' => 'AI 応答の解析に失敗しました。'], [
                 'reason' => 'invalid_ai_response',
                 'targets' => $targets,
             ]);

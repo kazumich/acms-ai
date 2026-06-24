@@ -24,7 +24,7 @@ class StreamingResponsesClient
             "model" => $this->model,
             "input" => $this->input,
             "stream" => true,
-            "store" => true
+            "store" => false
         ];
 
         if ($this->instructions !== null) {
@@ -61,7 +61,9 @@ class StreamingResponsesClient
 
         if (curl_errno($ch)) {
             $error = curl_error($ch);
+            curl_close($ch);
             throw new \Exception("cURL Error: " . $error);
         }
+        curl_close($ch);
     }
 }

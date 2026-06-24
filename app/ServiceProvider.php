@@ -37,7 +37,7 @@ class ServiceProvider extends ACMS_App
     /**
      * @var string
      */
-    public $desc = '複数のAI（OpenAI / Claude / Gemini / OpenAI互換）を利用したAI機能が使えます。';
+    public $desc = 'OpenAI / Claude / Gemini / さくらのAI Engine（OpenAI互換）を利用したAI機能が使えます。';
 
     /**
      * サービスの初期処理

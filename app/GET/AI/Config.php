@@ -47,6 +47,7 @@ class Config extends AI
         $obj = array_merge(
             [
                 'authorized' => $this->authorized ? 'true' : 'false',
+                'entry_ai_enabled' => ($titleEnabled || $tagEnabled) ? 'true' : 'false',
                 'title_enabled' => $titleEnabled ? 'true' : 'false',
                 'tag_enabled' => $tagEnabled ? 'true' : 'false',
                 'vision_valid_alt' => $visionValid['alt'] ? 'true' : 'false',

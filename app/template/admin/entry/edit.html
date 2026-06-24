@@ -1,5 +1,6 @@
 <!-- BEGIN_MODULE AI_Config -->
 <!-- BEGIN_IF [\{authorized\}/eq/true] -->
+<!-- BEGIN_IF [\{entry_ai_enabled\}/eq/true] -->
 <details class="acms-admin-accordion">
   <summary class="acms-admin-accordion-button">
     <span id="seo-entry-accordion-title"><!--T-->AI機能<!--/T--></span>
@@ -13,5 +14,6 @@
 
 <link rel="stylesheet" href="%{AI_CSS}">
 <script crossorigin src="%{AI_JS}"></script>
+<!-- END_IF -->
 <!-- END_IF -->
 <!-- END_MODULE AI_Config -->

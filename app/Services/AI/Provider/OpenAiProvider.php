@@ -124,7 +124,7 @@ class OpenAiProvider implements ProviderInterface, TextGeneratorInterface, ChatS
 
         $decoded = json_decode($text, true);
         if (!$decoded || !isset($decoded['items'])) {
-            throw new \RuntimeException('有効な形式のデータを取得できませんでした。: ' . $text);
+            throw new \RuntimeException('有効な形式のデータを取得できませんでした。');
         }
 
         return $decoded['items'];

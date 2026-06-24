@@ -74,7 +74,7 @@ class ResponsesClient
         $postData = [
             "model" => $this->model,
             "input" => $this->input,
-            "store" => true
+            "store" => false
         ];
 
         if ($this->instructions !== null) {

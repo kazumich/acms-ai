@@ -108,7 +108,10 @@ class Chat extends ACMS_POST
                 'exception' => get_class($e),
                 'silent' => $silent,
             ]);
-            echo "data: " . json_encode(['type' => 'error', 'message' => $e->getMessage()]) . "\n\n";
+            echo "data: " . json_encode([
+                'type' => 'error',
+                'message' => 'AIの応答を取得できませんでした。',
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n";
         }
 
         exit;

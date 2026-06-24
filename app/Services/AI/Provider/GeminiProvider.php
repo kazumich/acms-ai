@@ -127,7 +127,7 @@ class GeminiProvider implements ProviderInterface, TextGeneratorInterface, ChatS
                 'reason' => $e->getMessage(),
                 'exception' => get_class($e),
             ]);
-            SseEmitter::error($e->getMessage());
+            SseEmitter::error('AIの応答を取得できませんでした。');
         }
     }
 

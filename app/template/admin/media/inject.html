@@ -7,11 +7,13 @@
   - ボタンでチェック項目を 1 回の vision 呼び出しでまとめて生成・セット（ACMS_POST_AI_GenerateMediaFields）
   - タグは react-select のため、既存を全消去してから生成タグを擬似入力(値→Enter)で順次追加
   プロバイダ未設定(authorized=false)のときは ServiceProvider 側で注入自体を行わない。
+  ai_vision_valid=false のときは、この JS 内で何も追加せず終了する。
 
   ※ BEGIN_MODULE で包むと Template::render() が走り、JS 内の「同一行で開閉する中身ありの
      波括弧 {...}」を変数とみなして削除してしまう（object リテラルや new Event(..,{...}) が
-     壊れる）。そのためモジュール化せず素の <script> として注入する。各フィールドの有効フラグは
-     Hook が設定するグローバル変数 %{AI_VISION_VALID_*}（'1'/'0'）で受け取る。
+     壊れる）。そのためモジュール化せず素の <script> として注入する。親スイッチと各フィールドの
+     有効フラグは Hook が設定するグローバル変数 %{AI_VISION_VALID} / %{AI_VISION_VALID_*}
+     （'1'/'0'）で受け取る。
 -->
 <script>
 (function () {
@@ -20,6 +22,9 @@
   var STORE_KEY = 'acmsAiMediaTargets';
   var CELL_CLASS = 'js-acms-ai-media-cell';
   var BTN_CLASS = 'js-acms-ai-media-gen-btn';
+  var VISION_ENABLED = '%{AI_VISION_VALID}' === '1';
+
+  if (!VISION_ENABLED) { return; }
 
   // 管理者が「メディア プロンプト設定」で有効化した項目のみ提供する（Hook がグローバル変数で出力）
   var ADMIN_ENABLED = {

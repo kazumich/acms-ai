@@ -30,16 +30,18 @@ class Hook
             )
         );
 
-        // メディア管理画面の各フィールド有効フラグ。media/inject.html が
-        // %{AI_VISION_VALID_*}（'1'/'0'）で参照する。BEGIN_MODULE を使わず波括弧を
-        // 壊さないよう、テンプレ変数ではなくグローバル変数として渡す。
+        // メディア管理画面の親スイッチと各フィールド有効フラグ。media/inject.html が
+        // %{AI_VISION_VALID} / %{AI_VISION_VALID_*}（'1'/'0'）で参照する。BEGIN_MODULE を
+        // 使わず波括弧を壊さないよう、テンプレ変数ではなくグローバル変数として渡す。
         if (defined('ADMIN') && ADMIN === 'media_index') {
             try {
                 $config = (new ServicesAI())->getConfig();
+                $visionEnabled = !empty($config->get('ai_vision_valid'));
+                $globalVars->set('AI_VISION_VALID', $visionEnabled ? '1' : '0');
                 foreach (['alt', 'caption', 'memo', 'filename', 'tags'] as $key) {
                     $globalVars->set(
                         'AI_VISION_VALID_' . strtoupper($key),
-                        !empty($config->get('ai_vision_valid_' . $key)) ? '1' : '0'
+                        ($visionEnabled && !empty($config->get('ai_vision_valid_' . $key))) ? '1' : '0'
                     );
                 }
             } catch (\Exception $e) {
@@ -58,7 +60,7 @@ class Hook
                     'AI_OPENAI_PROJECT_FROM_ENV' => ['openai', 'projectId'],
                     'AI_ANTHROPIC_KEY_FROM_ENV' => ['anthropic', 'apiKey'],
                     'AI_GEMINI_KEY_FROM_ENV' => ['gemini', 'apiKey'],
-                    'AI_COMPAT_KEY_FROM_ENV' => ['compat', 'apiKey'],
+                    'AI_SAKURA_KEY_FROM_ENV' => ['compat', 'apiKey'],
                 ];
                 foreach ($envFlags as $varName => $args) {
                     $globalVars->set($varName, $service->isFromEnv($args[0], $args[1]) ? '1' : '0');

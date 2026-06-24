@@ -10,7 +10,12 @@ namespace Acms\Plugins\AI\Services\AI\Support;
  */
 class AuditLogger
 {
+    private const MASK = '***MASKED***';
     private const SECRET_KEY_PATTERN = '/(api[_-]?key|authorization|bearer|token|secret|password|passwd)/i';
+    private const POST_BODY_MASK_PATTERN =
+        '/(api[_-]?key|authorization|bearer|token|secret|password|passwd|article|messages|input'
+        . '|prompt|image[_-]?url|base[_-]?url|alreadygeneratedtags|addprompt)/i';
+    private const MAX_STRING_LENGTH = 1000;
 
     /**
      * @param array<string, mixed> $context
@@ -25,7 +30,13 @@ class AuditLogger
             self::sanitizeContext($context)
         );
 
-        \AcmsLogger::log($level, '[AI] ' . $message, $payload);
+        $originalPost = $_POST;
+        $_POST = self::sanitizePostBody($originalPost);
+        try {
+            \AcmsLogger::log($level, '[AI] ' . $message, $payload);
+        } finally {
+            $_POST = $originalPost;
+        }
     }
 
     /**
@@ -70,7 +81,7 @@ class AuditLogger
         $safe = [];
         foreach ($context as $key => $value) {
             if (preg_match(self::SECRET_KEY_PATTERN, (string) $key)) {
-                $safe[$key] = '***MASKED***';
+                $safe[$key] = self::MASK;
                 continue;
             }
             if (is_array($value)) {
@@ -81,8 +92,45 @@ class AuditLogger
                 $safe[$key] = get_class($value);
                 continue;
             }
+            if (is_string($value)) {
+                $safe[$key] = self::truncate($value);
+                continue;
+            }
             $safe[$key] = $value;
         }
         return $safe;
+    }
+
+    /**
+     * @param array<string|int, mixed> $data
+     * @return array<string|int, mixed>
+     */
+    private static function sanitizePostBody(array $data): array
+    {
+        $safe = [];
+        foreach ($data as $key => $value) {
+            if (is_string($key) && preg_match(self::POST_BODY_MASK_PATTERN, $key)) {
+                $safe[$key] = self::MASK;
+                continue;
+            }
+            if (is_array($value)) {
+                $safe[$key] = self::sanitizePostBody($value);
+                continue;
+            }
+            if (is_string($value)) {
+                $safe[$key] = self::truncate($value);
+                continue;
+            }
+            $safe[$key] = $value;
+        }
+        return $safe;
+    }
+
+    private static function truncate(string $value): string
+    {
+        if (mb_strlen($value) <= self::MAX_STRING_LENGTH) {
+            return $value;
+        }
+        return mb_substr($value, 0, self::MAX_STRING_LENGTH) . '...';
     }
 }

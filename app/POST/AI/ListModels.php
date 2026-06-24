@@ -69,7 +69,7 @@ class ListModels extends ACMS_POST
         if ($provider === 'compat') {
             // .env の API キーはブラウザに出さない値なので、送信先も保存済み設定に固定する。
             if ($apiKeyFromEnv) {
-                $baseUrl = (string) $config->get('ai_compat_base_url');
+                $baseUrl = (string) ($config->get('ai_compat_base_url') ?: ServicesAI::SAKURA_AI_ENGINE_BASE_URL);
             }
             try {
                 $baseUrl = $this->normalizeCompatBaseUrl($baseUrl);

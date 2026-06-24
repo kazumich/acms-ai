@@ -135,7 +135,7 @@ class AnthropicProvider implements ProviderInterface, TextGeneratorInterface, Ch
                 'reason' => $e->getMessage(),
                 'exception' => get_class($e),
             ]);
-            SseEmitter::error($e->getMessage());
+            SseEmitter::error('AIの応答を取得できませんでした。');
         }
     }
 

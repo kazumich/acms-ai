@@ -36,13 +36,161 @@
 
     <div class="acms-admin-tabs">
       <ul class="js-acms_admin_tabs">
-        <li><a href="#ai-main" class="js-ready-acms_tabs"><!-- T -->AI機能<!-- /T --></a></li>
+        <li><a href="#ai-main" class="js-ready-acms_tabs"><!-- T -->プロンプト設定<!-- /T --></a></li>
         <li><a href="#ai-keys"><!-- T -->API設定<!-- /T --></a></li>
       </ul>
 
       <!-- ================= AI機能タブ ================= -->
       <div class="acms-admin-tabs-panel" id="ai-main">
         
+        <table class="acms-admin-table-admin-edit">
+        <tr>
+        <td colspan="3">
+        <h2 class="acms-admin-admin-title2"><!-- T -->エントリー プロンプト設定<!-- /T --></h2>
+        <!-- 既定文は config.system.yaml（インストール時に private/config.system.yaml へ追記）が供給する -->
+        </td>
+        </tr>
+            <tr>
+              <th class="acms-admin-table-nowrap">
+                タイトル
+              </th>
+              <td>
+                <textarea name="ai_title_prompt" rows="2" class="acms-admin-form-width-full">{ai_title_prompt}</textarea>
+                <input type="hidden" name="config[]" value="ai_title_prompt" />
+              </td>
+              <td>
+                <div class="acms-admin-form-checkbox">
+                  <input type="checkbox" name="ai_title_valid[]" {ai_title_valid:checked#on} id="input-checkbox-ai_title_valid-on" value="on" />
+                  <label for="input-checkbox-ai_title_valid-on"><i class="acms-admin-ico-checkbox"></i>利用する</label>
+                </div>
+                <input type="hidden" name="config[]" value="ai_title_valid" />
+              </td>
+            </tr>
+            <tr>
+              <th class="acms-admin-table-nowrap">
+                タグ
+              </th>
+              <td>
+                <textarea name="ai_tag_prompt" rows="2" class="acms-admin-form-width-full">{ai_tag_prompt}</textarea>
+                <input type="hidden" name="config[]" value="ai_tag_prompt" />
+              </td>
+              <td>
+                <div class="acms-admin-form-checkbox">
+                  <input type="checkbox" name="ai_tag_valid[]" {ai_tag_valid:checked#on} id="input-checkbox-ai_tag_valid-on" value="on" />
+                  <label for="input-checkbox-ai_tag_valid-on"><i class="acms-admin-ico-checkbox"></i>利用する</label>
+                </div>
+                <input type="hidden" name="config[]" value="ai_tag_valid" />
+              </td>
+            </tr>
+          <tr>
+        <td colspan="3">
+
+        <h2 class="acms-admin-admin-title2"><!-- T -->メディア プロンプト設定<!-- /T --></h2>
+        <!-- 既定文は config.system.yaml が供給する -->
+        <!-- ai_vision_valid はメディアAI全体の有効化、ai_vision_valid_* は各フィールドの有効化を制御する -->
+        </td>
+        </tr>
+            <tr>
+              <th class="acms-admin-table-nowrap">システムプロンプト</th>
+              <td>
+                <textarea name="ai_vision_system_prompt" rows="3" class="acms-admin-form-width-full">{ai_vision_system_prompt}</textarea>
+                <input type="hidden" name="config[]" value="ai_vision_system_prompt" />
+              </td>
+              <td>
+                <div class="acms-admin-form-checkbox">
+                  <input type="checkbox" name="ai_vision_valid[]" {ai_vision_valid:checked#on} id="input-checkbox-ai_vision_valid-on" value="on" />
+                  <label for="input-checkbox-ai_vision_valid-on"><i class="acms-admin-ico-checkbox"></i>利用する</label>
+                </div>
+                <input type="hidden" name="config[]" value="ai_vision_valid" />
+              </td>
+            </tr>
+            <tr>
+              <th class="acms-admin-table-nowrap">
+                ファイル名
+              </th>
+              <td>
+                <textarea name="ai_vision_prompt_filename" rows="2" class="acms-admin-form-width-full">{ai_vision_prompt_filename}</textarea>
+                <input type="hidden" name="config[]" value="ai_vision_prompt_filename" />
+              </td>
+              <td>
+                <div class="acms-admin-form-checkbox">
+                  <input type="checkbox" name="ai_vision_valid_filename[]" {ai_vision_valid_filename:checked#on} id="input-checkbox-ai_vision_valid_filename-on" value="on" />
+                  <label for="input-checkbox-ai_vision_valid_filename-on"><i class="acms-admin-ico-checkbox"></i>利用する</label>
+                </div>
+                <input type="hidden" name="config[]" value="ai_vision_valid_filename" />
+              </td>
+            </tr>           
+            <tr>
+              <th class="acms-admin-table-nowrap">
+                タグ
+              </th>
+              <td>
+                <textarea name="ai_vision_prompt_tags" rows="2" class="acms-admin-form-width-full">{ai_vision_prompt_tags}</textarea>
+                <input type="hidden" name="config[]" value="ai_vision_prompt_tags" />
+              </td>
+              <td>
+                <div class="acms-admin-form-checkbox">
+                  <input type="checkbox" name="ai_vision_valid_tags[]" {ai_vision_valid_tags:checked#on} id="input-checkbox-ai_vision_valid_tags-on" value="on" />
+                  <label for="input-checkbox-ai_vision_valid_tags-on"><i class="acms-admin-ico-checkbox"></i>利用する</label>
+                </div>
+                <input type="hidden" name="config[]" value="ai_vision_valid_tags" />
+              </td>
+            </tr>
+            <tr>
+              <th class="acms-admin-table-nowrap">
+                キャプション
+              </th>
+              <td>
+                <textarea name="ai_vision_prompt_caption" rows="2" class="acms-admin-form-width-full">{ai_vision_prompt_caption}</textarea>
+                <input type="hidden" name="config[]" value="ai_vision_prompt_caption" />
+              </td>
+              <td>
+                <div class="acms-admin-form-checkbox">
+                  <input type="checkbox" name="ai_vision_valid_caption[]" {ai_vision_valid_caption:checked#on} id="input-checkbox-ai_vision_valid_caption-on" value="on" />
+                  <label for="input-checkbox-ai_vision_valid_caption-on"><i class="acms-admin-ico-checkbox"></i>利用する</label>
+                </div>
+                <input type="hidden" name="config[]" value="ai_vision_valid_caption" />
+              </td>
+            </tr>     
+            <tr>
+              <th class="acms-admin-table-nowrap">
+                代替テキスト
+              </th>
+              <td>
+                <textarea name="ai_vision_prompt_alt" rows="2" class="acms-admin-form-width-full">{ai_vision_prompt_alt}</textarea>
+                <input type="hidden" name="config[]" value="ai_vision_prompt_alt" />
+              </td>
+              <td>
+                <div class="acms-admin-form-checkbox">
+                  <input type="checkbox" name="ai_vision_valid_alt[]" {ai_vision_valid_alt:checked#on} id="input-checkbox-ai_vision_valid_alt-on" value="on" />
+                  <label for="input-checkbox-ai_vision_valid_alt-on"><i class="acms-admin-ico-checkbox"></i>利用する</label>
+                </div>
+                <input type="hidden" name="config[]" value="ai_vision_valid_alt" />
+              </td>
+            </tr>
+            <tr>
+              <th class="acms-admin-table-nowrap">
+                メモ
+              </th>
+              <td>
+                <textarea name="ai_vision_prompt_memo" rows="2" class="acms-admin-form-width-full">{ai_vision_prompt_memo}</textarea>
+                <input type="hidden" name="config[]" value="ai_vision_prompt_memo" />
+              </td>
+              <td>
+                <div class="acms-admin-form-checkbox">
+                  <input type="checkbox" name="ai_vision_valid_memo[]" {ai_vision_valid_memo:checked#on} id="input-checkbox-ai_vision_valid_memo-on" value="on" />
+                  <label for="input-checkbox-ai_vision_valid_memo-on"><i class="acms-admin-ico-checkbox"></i>利用する</label>
+                </div>
+                <input type="hidden" name="config[]" value="ai_vision_valid_memo" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ================= API設定タブ ================= -->
+      <div class="acms-admin-tabs-panel" id="ai-keys">
+
         <table class="acms-admin-table-admin-edit">
         <tr>
         <td colspan="2">
@@ -56,144 +204,16 @@
             </th>
             <td>
               <select name="ai_provider" class="acms-admin-form-width-full">
-                <!-- BEGIN_IF [{ai_openai_api_key}/nem/_or_/{ai_api_key}/nem/_or_/%{AI_OPENAI_KEY_FROM_ENV}/eq/1] --><option value="openai" {ai_provider:selected#openai}<!-- BEGIN_IF [{ai_provider}/em/] -->selected<!-- END_IF -->>OpenAI（純正 / Responses API）</option><!-- END_IF -->
+                <!-- BEGIN_IF [{ai_openai_api_key}/nem/_or_/{ai_api_key}/nem/_or_/%{AI_OPENAI_KEY_FROM_ENV}/eq/1] --><option value="openai" {ai_provider:selected#openai}<!-- BEGIN_IF [{ai_provider}/em/] -->selected<!-- END_IF -->>OpenAI</option><!-- END_IF -->
                 <!-- BEGIN_IF [{ai_anthropic_api_key}/nem/_or_/%{AI_ANTHROPIC_KEY_FROM_ENV}/eq/1] --><option value="anthropic" {ai_provider:selected#anthropic}>Claude（Anthropic）</option><!-- END_IF -->
                 <!-- BEGIN_IF [{ai_gemini_api_key}/nem/_or_/%{AI_GEMINI_KEY_FROM_ENV}/eq/1] --><option value="gemini" {ai_provider:selected#gemini}>Google Gemini</option><!-- END_IF -->
-                <!-- BEGIN_IF [{ai_compat_api_key}/nem/_or_/%{AI_COMPAT_KEY_FROM_ENV}/eq/1] --><option value="compat" {ai_provider:selected#compat}>OpenAI互換（さくらのAI Engine等）</option><!-- END_IF -->
+                <!-- BEGIN_IF [{ai_compat_api_key}/nem/_or_/%{AI_SAKURA_KEY_FROM_ENV}/eq/1] --><option value="compat" {ai_provider:selected#compat}>さくらのAI Engine</option><!-- END_IF -->
               </select>
               <input type="hidden" name="config[]" value="ai_provider" />
-              <p class="acms-admin-text-helper acms-admin-margin-top-mini">
-                「API設定」タブでAPIキーを保存したプロバイダが選べます。まだ何も保存していない場合は、先に「API設定」タブでキーとモデルを設定してください。
-              </p>
             </td>
           </tr>
         <tr>
-        <td colspan="2">
-        <h2 class="acms-admin-admin-title2"><!-- T -->エントリー プロンプト設定<!-- /T --></h2>
-        <!-- 既定文は config.system.yaml（インストール時に private/config.system.yaml へ追記）が供給する -->
-        </td>
-        </tr>
-            <tr>
-              <th class="acms-admin-table-nowrap">
-                <div class="acms-admin-form-checkbox">
-                  <input type="checkbox" name="ai_title_valid[]" {ai_title_valid:checked#on} id="input-checkbox-ai_title_valid-on" value="on" />
-                  <label for="input-checkbox-ai_title_valid-on"><i class="acms-admin-ico-checkbox"></i>タイトル</label>
-                </div>
-                <input type="hidden" name="config[]" value="ai_title_valid" />
-              </th>
-              <td>
-                <textarea name="ai_title_prompt" rows="2" class="acms-admin-form-width-full">{ai_title_prompt}</textarea>
-                <input type="hidden" name="config[]" value="ai_title_prompt" />
-              </td>
-            </tr>
-            <tr>
-              <th class="acms-admin-table-nowrap">
-                <div class="acms-admin-form-checkbox">
-                  <input type="checkbox" name="ai_tag_valid[]" {ai_tag_valid:checked#on} id="input-checkbox-ai_tag_valid-on" value="on" />
-                  <label for="input-checkbox-ai_tag_valid-on"><i class="acms-admin-ico-checkbox"></i>タグ</label>
-                </div>
-                <input type="hidden" name="config[]" value="ai_tag_valid" />
-              </th>
-              <td>
-                <textarea name="ai_tag_prompt" rows="2" class="acms-admin-form-width-full">{ai_tag_prompt}</textarea>
-                <input type="hidden" name="config[]" value="ai_tag_prompt" />
-              </td>
-            </tr>
-          <tr>
-        <td colspan="2">
-
-        <h2 class="acms-admin-admin-title2"><!-- T -->メディア プロンプト設定<!-- /T --></h2>
-        <!-- 既定文は config.system.yaml が供給する -->
-        <!-- 各フィールドの「有効」は管理者がメディア管理画面で使う項目を制御する（ai_vision_valid_*）。システムプロンプトは共通指示のため常時使用 -->
-        </td>
-        </tr>
-            <tr>
-              <th class="acms-admin-table-nowrap">システムプロンプト</th>
-              <td>
-                <textarea name="ai_vision_system_prompt" rows="3" class="acms-admin-form-width-full">{ai_vision_system_prompt}</textarea>
-                <input type="hidden" name="config[]" value="ai_vision_system_prompt" />
-              </td>
-            </tr>
-            <tr>
-              <th class="acms-admin-table-nowrap">
-                <div class="acms-admin-form-checkbox">
-                  <input type="checkbox" name="ai_vision_valid_filename[]" {ai_vision_valid_filename:checked#on} id="input-checkbox-ai_vision_valid_filename-on" value="on" />
-                  <label for="input-checkbox-ai_vision_valid_filename-on"><i class="acms-admin-ico-checkbox"></i>ファイル名</label>
-                </div>
-                <input type="hidden" name="config[]" value="ai_vision_valid_filename" />
-              </th>
-              <td>
-                <textarea name="ai_vision_prompt_filename" rows="2" class="acms-admin-form-width-full">{ai_vision_prompt_filename}</textarea>
-                <input type="hidden" name="config[]" value="ai_vision_prompt_filename" />
-              </td>
-            </tr>           
-            <tr>
-              <th class="acms-admin-table-nowrap">
-                <div class="acms-admin-form-checkbox">
-                  <input type="checkbox" name="ai_vision_valid_tags[]" {ai_vision_valid_tags:checked#on} id="input-checkbox-ai_vision_valid_tags-on" value="on" />
-                  <label for="input-checkbox-ai_vision_valid_tags-on"><i class="acms-admin-ico-checkbox"></i>タグ</label>
-                </div>
-                <input type="hidden" name="config[]" value="ai_vision_valid_tags" />
-              </th>
-              <td>
-                <textarea name="ai_vision_prompt_tags" rows="2" class="acms-admin-form-width-full">{ai_vision_prompt_tags}</textarea>
-                <input type="hidden" name="config[]" value="ai_vision_prompt_tags" />
-              </td>
-            </tr>
-            <tr>
-              <th class="acms-admin-table-nowrap">
-                <div class="acms-admin-form-checkbox">
-                  <input type="checkbox" name="ai_vision_valid_caption[]" {ai_vision_valid_caption:checked#on} id="input-checkbox-ai_vision_valid_caption-on" value="on" />
-                  <label for="input-checkbox-ai_vision_valid_caption-on"><i class="acms-admin-ico-checkbox"></i>キャプション</label>
-                </div>
-                <input type="hidden" name="config[]" value="ai_vision_valid_caption" />
-              </th>
-              <td>
-                <textarea name="ai_vision_prompt_caption" rows="2" class="acms-admin-form-width-full">{ai_vision_prompt_caption}</textarea>
-                <input type="hidden" name="config[]" value="ai_vision_prompt_caption" />
-              </td>
-            </tr>     
-            <tr>
-              <th class="acms-admin-table-nowrap">
-                <div class="acms-admin-form-checkbox">
-                  <input type="checkbox" name="ai_vision_valid_alt[]" {ai_vision_valid_alt:checked#on} id="input-checkbox-ai_vision_valid_alt-on" value="on" />
-                  <label for="input-checkbox-ai_vision_valid_alt-on"><i class="acms-admin-ico-checkbox"></i>代替テキスト</label>
-                </div>
-                <input type="hidden" name="config[]" value="ai_vision_valid_alt" />
-              </th>
-              <td>
-                <textarea name="ai_vision_prompt_alt" rows="2" class="acms-admin-form-width-full">{ai_vision_prompt_alt}</textarea>
-                <input type="hidden" name="config[]" value="ai_vision_prompt_alt" />
-              </td>
-            </tr>
-            <tr>
-              <th class="acms-admin-table-nowrap">
-                <div class="acms-admin-form-checkbox">
-                  <input type="checkbox" name="ai_vision_valid_memo[]" {ai_vision_valid_memo:checked#on} id="input-checkbox-ai_vision_valid_memo-on" value="on" />
-                  <label for="input-checkbox-ai_vision_valid_memo-on"><i class="acms-admin-ico-checkbox"></i>メモ</label>
-                </div>
-                <input type="hidden" name="config[]" value="ai_vision_valid_memo" />
-              </th>
-              <td>
-                <textarea name="ai_vision_prompt_memo" rows="2" class="acms-admin-form-width-full">{ai_vision_prompt_memo}</textarea>
-                <input type="hidden" name="config[]" value="ai_vision_prompt_memo" />
-              </td>
-            </tr>
-
-          </tbody>
-        </table>
-      </div>
-
-      <!-- ================= API設定タブ ================= -->
-      <div class="acms-admin-tabs-panel" id="ai-keys">
-        <p class="acms-admin-text-helper acms-admin-margin-bottom-small">
-          利用するプロバイダのAPIキーを入力し、「モデル取得」で利用可能なモデルを取得して選択してください。設定後「AI機能」タブで使用するプロバイダを選びます。
-        </p>
-
-        
-        <table class="acms-admin-table-admin-edit">
-        <tr>
-        <td colspan="2"><h2 class="acms-admin-admin-title2">OpenAI（純正）</h2>
+        <td colspan="2"><h2 class="acms-admin-admin-title2">OpenAI</h2>
         </td>
         </tr>
           <tr>
@@ -302,26 +322,19 @@
             </td>
           </tr>
         <tr>
-        <td colspan="2"><h2 class="acms-admin-admin-title2">OpenAI互換（さくらのAI Engine等）</h2>
+        <td colspan="2">
+        <h2 class="acms-admin-admin-title2">さくらのAI Engine（OpenAI互換）</h2>
+        <!-- 既定では、さくらのAI Engine の OpenAI互換エンドポイントを利用する -->
+        <input type="hidden" name="ai_compat_base_url" value="<!-- BEGIN_IF [{ai_compat_base_url}/nem/] -->{ai_compat_base_url}<!-- ELSE -->https://api.ai.sakura.ad.jp/v1<!-- END_IF -->" />
+        <input type="hidden" name="config[]" value="ai_compat_base_url" />
         </td>
         </tr>
           <tr>
-            <th class="acms-admin-table-nowrap">Base URL</th>
-            <td>
-              <input type="text" name="ai_compat_base_url" value="{ai_compat_base_url}" class="acms-admin-form-width-full" placeholder="https://api.ai.sakura.ad.jp/v1" />
-              <button type="button" class="acms-admin-btn js-ai-sakura-preset"><!-- T -->さくらの既定URLを入力<!-- /T --></button>
-              <input type="hidden" name="config[]" value="ai_compat_base_url" />
-              <p class="acms-admin-text-helper acms-admin-margin-top-mini">
-                Chat Completions 互換エンドポイントの `/v1` までのURL。さくらのAI Engine のほか、互換APIを提供するローカルLLM等にも使えます。
-              </p>
-            </td>
-          </tr>
-          <tr>
             <th class="acms-admin-table-nowrap">API KEY</th>
             <td>
-              <!-- BEGIN_IF [%{AI_COMPAT_KEY_FROM_ENV}/eq/1] -->
+              <!-- BEGIN_IF [%{AI_SAKURA_KEY_FROM_ENV}/eq/1] -->
               <span class="acms-admin-label acms-admin-label-default"><!-- T -->.env で設定済み<!-- /T --></span>
-              <code class="acms-admin-margin-left-mini">ACMS_AI_COMPAT_API_KEY</code>
+              <code class="acms-admin-margin-left-mini">ACMS_AI_SAKURA_API_KEY</code>
               <!-- ELSE -->
               <input type="password" name="ai_compat_api_key" value="{ai_compat_api_key}" class="acms-admin-form-width-full" autocomplete="off" />
               <input type="hidden" name="config[]" value="ai_compat_api_key" />
@@ -355,6 +368,27 @@
     if (!name) { return ''; }
     var el = document.querySelector('[name="' + name + '"]');
     return el ? el.value : '';
+  }
+
+  function bindVisionParentToggle() {
+    var parent = document.getElementById('input-checkbox-ai_vision_valid-on');
+    if (!parent) { return; }
+    var childNames = [
+      'ai_vision_valid_filename[]',
+      'ai_vision_valid_tags[]',
+      'ai_vision_valid_caption[]',
+      'ai_vision_valid_alt[]',
+      'ai_vision_valid_memo[]'
+    ];
+    parent.addEventListener('change', function () {
+      if (parent.checked) { return; }
+      childNames.forEach(function (name) {
+        var child = document.querySelector('[name="' + name + '"]');
+        if (!child || !child.checked) { return; }
+        child.checked = false;
+        child.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    });
   }
 
   function populateModelSelect(provider, models) {
@@ -420,12 +454,7 @@
     }
   });
 
-  var sakuraBtn = document.querySelector('.js-ai-sakura-preset');
-  if (sakuraBtn) {
-    sakuraBtn.addEventListener('click', function () {
-      var el = document.querySelector('[name="ai_compat_base_url"]');
-      if (el && !el.value) { el.value = 'https://api.ai.sakura.ad.jp/v1'; }
-    });
-  }
+  bindVisionParentToggle();
+
 })();
 </script>

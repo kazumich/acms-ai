@@ -16,12 +16,15 @@ a-blog cms の AI機能を拡張するアプリです。
 - PHP: 8.1 – 8.4 (8.5+ not tested yet)
 - a-blog cms for Professional or Enterprise のみ（現状スタンダードライセンスでの利用はライセンス違反となります）
 
-## サポートモデル
+## サポートプロバイダ
 
-- gpt-5.4, gpt-5.4-pro, gpt-5.4-mini, gpt-5.4-nano
+- OpenAI
+- Claude（Anthropic）
+- Google Gemini
+- さくらのAI Engine（OpenAI互換 API）
 
 ## 注意点
-- ChatGPT の API KEY は利用できるモデルの制限をかけることができます。使用したいモデルが表示されない場合は、API KEY の設定を確認してみてください。
+- API KEY は利用できるモデルの制限をかけることができます。使用したいモデルが表示されない場合は、API KEY の設定を確認してみてください。
 - このキーとモデルは、config として保存されます。config はキャッシュを残しますので、うまく設定できない場合はダッシュボードからコンフィグキャッシュをクリアしてください。
 
 ## インストール方法
@@ -76,12 +79,13 @@ ACMS_AI_ANTHROPIC_API_KEY=sk-ant-xxxxxxxx
 # Google Gemini
 ACMS_AI_GEMINI_API_KEY=AIza...
 
-# OpenAI 互換（さくらの AI Engine 等）
-ACMS_AI_COMPAT_API_KEY=xxxxxxxx
+# さくらのAI Engine（OpenAI互換）
+ACMS_AI_SAKURA_API_KEY=xxxxxxxx
 ```
 
 - **優先順位**: `.env` に値があれば、管理画面（DB）に保存された値より `.env` が優先されます。
 - **モデル選択**は引き続き管理画面で行います（`.env` 管理のプロバイダでも「モデル取得」はサーバ側で `.env` のキーを使って動作します）。
+- さくらのAI Engine は OpenAI互換 API として接続します。既定の Base URL は `https://api.ai.sakura.ad.jp/v1` です。
 - `.env` を変更したら、設定が反映されないことがあるためコンフィグキャッシュのクリアをお試しください。
 
 ## エントリー編集AI機能

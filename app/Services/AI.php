@@ -11,6 +11,8 @@ use Acms\Plugins\AI\Services\AI\Support\AuditLogger;
 
 class AI
 {
+    public const SAKURA_AI_ENGINE_BASE_URL = 'https://api.ai.sakura.ad.jp/v1';
+
     /**
      * @param string $organizationId ChatGPTの組織キー
      * @param string $projectId ChatGPTのプロジェクトキー
@@ -114,7 +116,7 @@ class AI
         ],
         'anthropic' => ['apiKey' => 'ACMS_AI_ANTHROPIC_API_KEY'],
         'gemini' => ['apiKey' => 'ACMS_AI_GEMINI_API_KEY'],
-        'compat' => ['apiKey' => 'ACMS_AI_COMPAT_API_KEY'],
+        'compat' => ['apiKey' => 'ACMS_AI_SAKURA_API_KEY'],
     ];
 
     /**
@@ -153,7 +155,7 @@ class AI
             case 'compat':
                 $base['apiKey'] = (string) $config->get('ai_compat_api_key');
                 $base['model'] = (string) $config->get('ai_compat_model');
-                $base['baseUrl'] = (string) $config->get('ai_compat_base_url');
+                $base['baseUrl'] = (string) ($config->get('ai_compat_base_url') ?: self::SAKURA_AI_ENGINE_BASE_URL);
                 break;
             case 'openai':
             default:
