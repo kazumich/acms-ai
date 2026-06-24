@@ -5,6 +5,7 @@ declare global {
       Config: {
         root: string,
         bid?: string | number,
+        LiteEditorSourceModeTags?: RegExp,
         LiteEditorConf: {
           btnOptions: {
             label: string,
