@@ -79,11 +79,40 @@ class AI
     /**
      * @return Field|null $result プロンプト｜失敗するとnull
     */
-    public function getConfig()
+    public function getConfig(?int $bid = null)
     {
+        $bid = $bid ?? (defined('BID') ? (int) BID : 1);
         $config = Config::loadDefaultField();
-        $config->overload(Config::loadBlogConfig(BID));
+        foreach ($this->getBlogLineage($bid) as $blogId) {
+            $config->overload(Config::loadBlogConfig($blogId));
+        }
         return $config;
+    }
+
+    /**
+     * 親ブログから現在ブログまでの BID を順に返す。
+     * 子ブログが AI 設定を持たない場合は親ブログの設定を使い、子ブログ側に
+     * 個別設定があれば後勝ちで上書きできるようにする。
+     *
+     * @param int $bid
+     * @return int[]
+     */
+    private function getBlogLineage(int $bid): array
+    {
+        $lineage = [];
+        $seen = [];
+
+        while ($bid > 0 && empty($seen[$bid])) {
+            $lineage[] = $bid;
+            $seen[$bid] = true;
+            $parentBid = (int) \ACMS_RAM::blogParent($bid);
+            if ($parentBid <= 0 || $parentBid === $bid) {
+                break;
+            }
+            $bid = $parentBid;
+        }
+
+        return array_reverse($lineage);
     }
 
     /**
