@@ -20,9 +20,9 @@ const Create = memo(({ label }: Props) => {
       type="button"
       className='acms-admin-btn acms-admin-inline-block'
       onClick={onClickHandler}
-      disabled={status === 'loading'}
     >
-      {displayLabel}
+      {/* label 指定時は常にその文言を固定表示（再生成へ変えない） */}
+      {label ?? displayLabel}
     </button>
   )
 })
