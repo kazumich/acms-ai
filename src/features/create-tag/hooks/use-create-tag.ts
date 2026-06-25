@@ -4,7 +4,7 @@ import { usePromptContext } from '../../../stores/use-prompt'
 import { UnitJoin } from '../../../utils'
 import type { PromptResponseType } from '../../../types/prompt-type'
 
-export function useCreateTag(addPrompt?: string, initialLabel = 'ユニットからタグを生成') {
+export function useCreateTag(addPrompt?: string, initialLabel = 'タグを生成') {
   const [displayLabel, setDisplayLabel] = useState(initialLabel)
   const { prompt: { results: promptResults, status }, setStatus, addResult, setMode } = usePromptContext()
 

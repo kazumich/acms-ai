@@ -1,6 +1,7 @@
 import { ChangeEvent, memo, useCallback, useState } from 'react'
 import type { PromptResultType, PromptResponseType } from '../../../types/prompt-type'
 import Insert from './insert'
+import styles from '../../../css/styles.module.css'
 
 const Result = memo((props: PromptResultType) => {
   const { data } = props
@@ -14,7 +15,7 @@ const Result = memo((props: PromptResultType) => {
 
   return (
     <>
-      <ul>
+      <ul className={`${styles.entryAiResultList} ${styles.entryAiResultListStack}`}>
         {data
           .filter((object: PromptResponseType) => object.content.trim() !== '')
           .map((object: PromptResponseType) => {
@@ -22,7 +23,6 @@ const Result = memo((props: PromptResultType) => {
             return (
               <li
                 className="acms-admin-form-radio"
-                style={{ listStyle: 'none', display: 'block' }}
                 key={object.content}
               >
                 <input

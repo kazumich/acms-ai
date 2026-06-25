@@ -41,6 +41,62 @@
   resize: none;
 }
 
+.entryAiActionRow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.entryAiLoading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.entryAiLoadingSpinner {
+  width: 0.9em;
+  height: 0.9em;
+  border: 0.15em solid var(--color-primary-border);
+  border-right-color: var(--color-primary);
+  border-radius: 50%;
+  animation: entry-ai-loading-spin 0.75s linear infinite;
+}
+
+@keyframes entry-ai-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.entryAiResultList {
+  margin: 0.45rem 0 0.65rem;
+  padding: 0;
+  list-style: none;
+}
+
+.entryAiResultList li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entryAiResultListStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.entryAiResultListInline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1rem;
+}
+
 /* Chat Modal - Split layout (Chat + Canvas) */
 .chatModalTitle {
   position: absolute;
@@ -639,5 +695,3 @@
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
-
-

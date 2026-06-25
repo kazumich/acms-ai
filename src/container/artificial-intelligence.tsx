@@ -1,6 +1,14 @@
 import { CreateTag, ResultTag, EntryTagInitializer } from '../features/create-tag'
 import { CreateTitle, ResultTitle } from '../features/create-title'
 import { usePromptContext } from '../stores/use-prompt'
+import styles from '../css/styles.module.css'
+
+const LoadingIndicator = () => (
+  <span className={styles.entryAiLoading} aria-live="polite">
+    <span className={styles.entryAiLoadingSpinner} aria-hidden="true" />
+    <span>生成中</span>
+  </span>
+)
 
 // Context を直接購読するため memo による最適化効果がなく、不要なラップを避ける
 const TitleResultRow = () => {
@@ -10,8 +18,10 @@ const TitleResultRow = () => {
 
   return (
     <>
-      <CreateTitle />
-      {mode === 'createTitle' && status === 'loading' && <p>生成中</p>}
+      <div className={styles.entryAiActionRow}>
+        <CreateTitle />
+        {mode === 'createTitle' && status === 'loading' && <LoadingIndicator />}
+      </div>
       {results
         .filter((result) => result.byMode === 'createTitle')
         .map((result) => (
@@ -30,9 +40,11 @@ const TagResultRow = () => {
 
   return (
     <>
-      <CreateTag />
+      <div className={styles.entryAiActionRow}>
+        <CreateTag />
+        {mode === 'createTag' && status === 'loading' && <LoadingIndicator />}
+      </div>
       <EntryTagInitializer />
-      {mode === 'createTag' && status === 'loading' && <p>生成中</p>}
       {results
         .filter((result) => result.byMode === 'createTag')
         .map((result) => (

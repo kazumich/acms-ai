@@ -4,7 +4,7 @@ import { usePromptContext } from '../../../stores/use-prompt'
 import { UnitJoin } from '../../../utils'
 import type { PromptResultType } from '../../../types/prompt-type'
 
-export function useCreateTitle(initialLabel = 'ユニットからタイトルを生成') {
+export function useCreateTitle(initialLabel = 'タイトルを生成') {
   const [displayLabel, setDisplayLabel] = useState(initialLabel)
   const { prompt: { results: promptResults, status }, setStatus, addResult, putResult, setMode } = usePromptContext()
 
