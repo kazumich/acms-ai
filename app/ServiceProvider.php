@@ -12,7 +12,7 @@ class ServiceProvider extends ACMS_App
     /**
      * @var string
      */
-    public $version = '1.2.5';
+    public $version = '1.2.6';
 
     /**
      * @var string
@@ -58,7 +58,15 @@ class ServiceProvider extends ACMS_App
 
         // loader / メディア inject は素の <script> として注入する（BEGIN_MODULE で包むと
         // Template::render() が JS 内の波括弧を壊すため）。authorized 判定は PHP 側で行う。
-        $authorized = (new Services\AI())->isAuthorized();
+        $authorized = false;
+        $visionAuthorized = false;
+        try {
+            $serviceAI = new Services\AI();
+            $config = $serviceAI->getConfig();
+            $authorized = $serviceAI->isAuthorized($config);
+            $visionAuthorized = $serviceAI->isAuthorized($config, 'vision');
+        } catch (\Exception $e) {
+        }
 
         // 全管理画面共通ローダー。<acms-ai-assistant-button> がある画面だけ本体を遅延ロードする。
         if ($authorized) {
@@ -66,7 +74,7 @@ class ServiceProvider extends ACMS_App
         }
 
         // メディア管理画面では、画像から各フィールドを生成する操作列を注入する。
-        if (ADMIN === 'media_index' && $authorized) {
+        if (ADMIN === 'media_index' && $visionAuthorized) {
             $inject->add('admin-main', PLUGIN_DIR . 'AI/template/admin/media/inject.html');
         }
 

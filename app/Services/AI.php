@@ -158,13 +158,16 @@ class AI
      * 現在選択中のプロバイダの認証情報を返す。
      * provider / apiKey / model / organizationId / projectId / baseUrl を含む。
      * .env に該当キーがあれば DB 値より優先する。
+     * $purpose に 'vision' を指定した場合は画像解析用モデルを優先し、
+     * 未設定なら通常モデルへフォールバックする。
      *
      * キー: provider / apiKey / model / organizationId / projectId / baseUrl
      *
      * @param Field $config
+     * @param string $purpose text|vision
      * @return array<string, string>
      */
-    public function getActiveCredentials(Field $config): array
+    public function getActiveCredentials(Field $config, string $purpose = 'text'): array
     {
         $this->applyLegacyFallback($config);
         $provider = $config->get('ai_provider') ?: 'openai';
@@ -181,22 +184,22 @@ class AI
         switch ($provider) {
             case 'anthropic':
                 $base['apiKey'] = (string) $config->get('ai_anthropic_api_key');
-                $base['model'] = (string) $config->get('ai_anthropic_model');
+                $base['model'] = $this->getProviderModel($config, 'anthropic', $purpose);
                 break;
             case 'gemini':
                 $base['apiKey'] = (string) $config->get('ai_gemini_api_key');
-                $base['model'] = (string) $config->get('ai_gemini_model');
+                $base['model'] = $this->getProviderModel($config, 'gemini', $purpose);
                 break;
             case 'compat':
                 $base['apiKey'] = (string) $config->get('ai_compat_api_key');
-                $base['model'] = (string) $config->get('ai_compat_model');
+                $base['model'] = $this->getProviderModel($config, 'compat', $purpose);
                 $base['baseUrl'] = (string) ($config->get('ai_compat_base_url') ?: self::SAKURA_AI_ENGINE_BASE_URL);
                 break;
             case 'openai':
             default:
                 $base['provider'] = 'openai';
                 $base['apiKey'] = (string) $config->get('ai_openai_api_key');
-                $base['model'] = (string) $config->get('ai_openai_model');
+                $base['model'] = $this->getProviderModel($config, 'openai', $purpose);
                 $base['organizationId'] = (string) $config->get('ai_openai_organization_id');
                 $base['projectId'] = (string) $config->get('ai_openai_project_id');
                 break;
@@ -211,6 +214,24 @@ class AI
         }
 
         return $base;
+    }
+
+    /**
+     * @param Field $config
+     * @param string $provider
+     * @param string $purpose text|vision
+     * @return string
+     */
+    private function getProviderModel(Field $config, string $provider, string $purpose): string
+    {
+        $modelKey = 'ai_' . $provider . '_model';
+        if ($purpose === 'vision') {
+            $visionModel = (string) $config->get('ai_' . $provider . '_vision_model');
+            if ($visionModel !== '') {
+                return $visionModel;
+            }
+        }
+        return (string) $config->get($modelKey);
     }
 
     /**
@@ -245,13 +266,14 @@ class AI
      * テンプレ注入の可否判定（ServiceProvider）等で利用する。
      *
      * @param Field|null $config 省略時は getConfig() で取得する
+     * @param string $purpose text|vision
      * @return bool
      */
-    public function isAuthorized(?Field $config = null): bool
+    public function isAuthorized(?Field $config = null, string $purpose = 'text'): bool
     {
         try {
             $config = $config ?: $this->getConfig();
-            $cred = $this->getActiveCredentials($config);
+            $cred = $this->getActiveCredentials($config, $purpose);
             return !empty($cred['apiKey']) && !empty($cred['model']);
         } catch (Exception $e) {
             return false;

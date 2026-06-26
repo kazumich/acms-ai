@@ -265,6 +265,21 @@
               <input type="hidden" name="config[]" value="ai_openai_model" />
             </td>
           </tr>
+          <tr>
+            <th class="acms-admin-table-nowrap">画像解析モデル</th>
+            <td>
+              <select name="ai_openai_vision_model" class="acms-admin-form-width-3quarters js-ai-model"
+                data-provider="openai" data-key="ai_openai_api_key"
+                data-org="ai_openai_organization_id" data-project="ai_openai_project_id"
+                data-default-label="通常モデルと同じ">
+                <option value=""><!-- T -->通常モデルと同じ<!-- /T --></option>
+                <!-- BEGIN_IF [{ai_openai_vision_model}/nem/] --><option value="{ai_openai_vision_model}" selected>{ai_openai_vision_model}</option><!-- END_IF -->
+              </select>
+              <button type="button" class="acms-admin-btn js-ai-models" data-provider="openai" data-key="ai_openai_api_key"
+                data-org="ai_openai_organization_id" data-project="ai_openai_project_id"><!-- T -->モデル取得<!-- /T --></button>
+              <input type="hidden" name="config[]" value="ai_openai_vision_model" />
+            </td>
+          </tr>
         <tr>
         <td colspan="2"><h2 class="acms-admin-admin-title2">Claude（Anthropic）</h2>
         </td>
@@ -291,6 +306,18 @@
               <input type="hidden" name="config[]" value="ai_anthropic_model" />
             </td>
           </tr>
+          <tr>
+            <th class="acms-admin-table-nowrap">画像解析モデル</th>
+            <td>
+              <select name="ai_anthropic_vision_model" class="acms-admin-form-width-3quarters js-ai-model"
+                data-provider="anthropic" data-key="ai_anthropic_api_key" data-default-label="通常モデルと同じ">
+                <option value=""><!-- T -->通常モデルと同じ<!-- /T --></option>
+                <!-- BEGIN_IF [{ai_anthropic_vision_model}/nem/] --><option value="{ai_anthropic_vision_model}" selected>{ai_anthropic_vision_model}</option><!-- END_IF -->
+              </select>
+              <button type="button" class="acms-admin-btn js-ai-models" data-provider="anthropic" data-key="ai_anthropic_api_key"><!-- T -->モデル取得<!-- /T --></button>
+              <input type="hidden" name="config[]" value="ai_anthropic_vision_model" />
+            </td>
+          </tr>
         <tr>
         <td colspan="2"><h2 class="acms-admin-admin-title2">Google Gemini</h2>
         </td>
@@ -315,6 +342,18 @@
               </select>
               <button type="button" class="acms-admin-btn js-ai-models" data-provider="gemini" data-key="ai_gemini_api_key"><!-- T -->モデル取得<!-- /T --></button>
               <input type="hidden" name="config[]" value="ai_gemini_model" />
+            </td>
+          </tr>
+          <tr>
+            <th class="acms-admin-table-nowrap">画像解析モデル</th>
+            <td>
+              <select name="ai_gemini_vision_model" class="acms-admin-form-width-3quarters js-ai-model"
+                data-provider="gemini" data-key="ai_gemini_api_key" data-default-label="通常モデルと同じ">
+                <option value=""><!-- T -->通常モデルと同じ<!-- /T --></option>
+                <!-- BEGIN_IF [{ai_gemini_vision_model}/nem/] --><option value="{ai_gemini_vision_model}" selected>{ai_gemini_vision_model}</option><!-- END_IF -->
+              </select>
+              <button type="button" class="acms-admin-btn js-ai-models" data-provider="gemini" data-key="ai_gemini_api_key"><!-- T -->モデル取得<!-- /T --></button>
+              <input type="hidden" name="config[]" value="ai_gemini_vision_model" />
             </td>
           </tr>
         <tr>
@@ -345,6 +384,19 @@
               </select>
               <button type="button" class="acms-admin-btn js-ai-models" data-provider="compat" data-key="ai_compat_api_key" data-base="ai_compat_base_url"><!-- T -->モデル取得<!-- /T --></button>
               <input type="hidden" name="config[]" value="ai_compat_model" />
+            </td>
+          </tr>
+          <tr>
+            <th class="acms-admin-table-nowrap">画像解析モデル</th>
+            <td>
+              <select name="ai_compat_vision_model" class="acms-admin-form-width-3quarters js-ai-model"
+                data-provider="compat" data-key="ai_compat_api_key" data-base="ai_compat_base_url"
+                data-default-label="通常モデルと同じ">
+                <option value=""><!-- T -->通常モデルと同じ<!-- /T --></option>
+                <!-- BEGIN_IF [{ai_compat_vision_model}/nem/] --><option value="{ai_compat_vision_model}" selected>{ai_compat_vision_model}</option><!-- END_IF -->
+              </select>
+              <button type="button" class="acms-admin-btn js-ai-models" data-provider="compat" data-key="ai_compat_api_key" data-base="ai_compat_base_url"><!-- T -->モデル取得<!-- /T --></button>
+              <input type="hidden" name="config[]" value="ai_compat_vision_model" />
             </td>
           </tr>
         </table>
@@ -388,22 +440,33 @@
   }
 
   function populateModelSelect(provider, models) {
-    var sel = document.querySelector('select.js-ai-model[data-provider="' + provider + '"]');
-    if (!sel) { return; }
-    var selected = sel.value;
-    while (sel.firstChild) { sel.removeChild(sel.firstChild); }
-    var seen = {};
-    function addOpt(v) {
-      if (!v || seen[v]) { return; }
-      seen[v] = true;
-      var o = document.createElement('option');
-      o.value = v;
-      o.textContent = v;
-      if (v === selected) { o.selected = true; }
-      sel.appendChild(o);
-    }
-    addOpt(selected);
-    (models || []).forEach(addOpt);
+    var selects = document.querySelectorAll('select.js-ai-model[data-provider="' + provider + '"]');
+    Array.prototype.forEach.call(selects, function (sel) {
+      var selected = sel.value;
+      var defaultLabel = sel.getAttribute('data-default-label') || '';
+      while (sel.firstChild) { sel.removeChild(sel.firstChild); }
+      var seen = {};
+      function addDefaultOpt() {
+        if (!defaultLabel) { return; }
+        var o = document.createElement('option');
+        o.value = '';
+        o.textContent = defaultLabel;
+        if (selected === '') { o.selected = true; }
+        sel.appendChild(o);
+      }
+      function addOpt(v) {
+        if (!v || seen[v]) { return; }
+        seen[v] = true;
+        var o = document.createElement('option');
+        o.value = v;
+        o.textContent = v;
+        if (v === selected) { o.selected = true; }
+        sel.appendChild(o);
+      }
+      addDefaultOpt();
+      addOpt(selected);
+      (models || []).forEach(addOpt);
+    });
   }
 
   function fetchModels(el) {

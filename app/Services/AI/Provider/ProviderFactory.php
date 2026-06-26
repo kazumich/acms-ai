@@ -13,13 +13,18 @@ class ProviderFactory
     /**
      * 現在の設定で有効な AI プロバイダを生成する。
      */
-    public static function create(): ProviderInterface
+    public static function create(string $purpose = 'text'): ProviderInterface
     {
         $service = new ServicesAI();
         $config = $service->getConfig();
-        $cred = $service->getActiveCredentials($config);
+        $cred = $service->getActiveCredentials($config, $purpose);
 
         return self::build($cred['provider'], $cred);
+    }
+
+    public static function createForVision(): ProviderInterface
+    {
+        return self::create('vision');
     }
 
     /**

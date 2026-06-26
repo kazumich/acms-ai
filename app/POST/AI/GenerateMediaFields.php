@@ -142,7 +142,7 @@ class GenerateMediaFields extends ACMS_POST
             . implode("\n", $lines);
 
         try {
-            $provider = ProviderFactory::create();
+            $provider = ProviderFactory::createForVision();
             if (!$provider instanceof VisionInterface) {
                 $this->respond(400, ['error' => '選択中のAIプロバイダは画像解析（vision）に対応していません'], [
                     'reason' => 'unsupported_provider',
