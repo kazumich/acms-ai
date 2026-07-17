@@ -79,6 +79,7 @@ class ServiceProvider extends ACMS_App
         }
 
         if (ADMIN === 'app_' . $this->menu) {
+            $inject->add('admin-topicpath', PLUGIN_DIR . 'AI/template/admin/topicpath.html');
             $inject->add('admin-main', PLUGIN_DIR . 'AI/template/admin/main.html');
         }
     }
